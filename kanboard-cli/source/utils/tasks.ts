@@ -1,4 +1,4 @@
-import type {Task, TaskStatus, KanboardConfig} from '../types/index.js';
+import type {Task, TaskStatus, KanboardConfig, ChecklistItem} from '../types/index.js';
 import {generateId} from './id.js';
 import {readConfig, writeConfig} from './config.js';
 
@@ -8,6 +8,8 @@ export interface CreateTaskInput {
 	owner?: string;
 	status?: TaskStatus;
 	requirements?: string[];
+	checklist?: ChecklistItem[];
+	deadline?: string | null;
 }
 
 export function createTask(input: CreateTaskInput): Task {
@@ -28,6 +30,8 @@ export function createTask(input: CreateTaskInput): Task {
 		description: input.description ?? '',
 		owner: input.owner ?? null,
 		requirements: input.requirements ?? [],
+		checklist: input.checklist ?? [],
+		deadline: input.deadline ?? null,
 		status: input.status ?? ('backlog' as TaskStatus),
 		createdAt: now,
 		updatedAt: now,
@@ -46,6 +50,8 @@ export interface UpdateTaskInput {
 	owner?: string | null;
 	status?: TaskStatus;
 	requirements?: string[];
+	checklist?: ChecklistItem[];
+	deadline?: string | null;
 	order?: number;
 }
 
@@ -70,6 +76,8 @@ export function updateTask(id: string, input: UpdateTaskInput): Task {
 	if (input.owner !== undefined) task.owner = input.owner;
 	if (input.status !== undefined) task.status = input.status;
 	if (input.requirements !== undefined) task.requirements = input.requirements;
+	if (input.checklist !== undefined) task.checklist = input.checklist;
+	if (input.deadline !== undefined) task.deadline = input.deadline;
 	if (input.order !== undefined) task.order = input.order;
 	task.updatedAt = now;
 

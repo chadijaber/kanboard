@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import React from 'react';
-import {render} from 'ink';
+import {render, Text} from 'ink';
 import meow from 'meow';
 import App from './app.js';
 import {initCommand} from './commands/init.js';
@@ -12,6 +12,11 @@ import {taskShowCommand} from './commands/task/show.js';
 import {taskUpdateCommand} from './commands/task/update.js';
 import {taskMoveCommand} from './commands/task/move.js';
 import {taskDeleteCommand} from './commands/task/delete.js';
+import {
+	taskChecklistAddCommand,
+	taskChecklistToggleCommand,
+	taskChecklistRemoveCommand,
+} from './commands/task/checklist.js';
 import {docAddCommand} from './commands/doc/add.js';
 import {docListCommand} from './commands/doc/list.js';
 import {docReadCommand} from './commands/doc/read.js';
@@ -38,6 +43,11 @@ const cli = meow(
 	  $ kanboard-cli task move <id> <status>  Move task to status
 	  $ kanboard-cli task delete <id>   Delete a task
 
+	Checklist Commands
+	  $ kanboard-cli task checklist <id> add     Add a checklist item (--text)
+	  $ kanboard-cli task checklist <id> toggle  Toggle a checklist item (--index)
+	  $ kanboard-cli task checklist <id> remove  Remove a checklist item (--index)
+
 	Doc Commands
 	  $ kanboard-cli doc add            Create a new doc
 	  $ kanboard-cli doc list           List all docs
@@ -51,6 +61,9 @@ const cli = meow(
 	  --owner, -o        Task owner
 	  --status, -s       Task status (backlog, todo, in_progress, review, done)
 	  --requirements, -r Requirements (comma-separated)
+	  --deadline, -D     Task deadline (YYYY-MM-DD)
+	  --text, -T         Checklist item text
+	  --index            Checklist item index (0-based)
 	  --github-url, -g   GitHub repository URL
 	  --path, -p         Doc path
 	  --title, -t        Doc title
@@ -67,6 +80,9 @@ const cli = meow(
 			owner: {type: 'string', shortFlag: 'o'},
 			status: {type: 'string', shortFlag: 's'},
 			requirements: {type: 'string', shortFlag: 'r'},
+			deadline: {type: 'string', shortFlag: 'D'},
+			text: {type: 'string', shortFlag: 'T'},
+			index: {type: 'string'},
 			githubUrl: {type: 'string', shortFlag: 'g'},
 			path: {type: 'string', shortFlag: 'p'},
 			title: {type: 'string', shortFlag: 't'},
@@ -108,6 +124,7 @@ function runCommand(): React.ReactNode | null {
 						owner: cli.flags.owner,
 						status: cli.flags.status,
 						requirements: cli.flags.requirements?.split(',').map(r => r.trim()),
+						deadline: cli.flags.deadline,
 					});
 				case 'list':
 					return taskListCommand({
@@ -125,11 +142,30 @@ function runCommand(): React.ReactNode | null {
 						owner: cli.flags.owner,
 						status: cli.flags.status,
 						requirements: cli.flags.requirements?.split(',').map(r => r.trim()),
+						deadline: cli.flags.deadline,
 					});
 				case 'move':
 					return taskMoveCommand({id: args[0], status: args[1]});
 				case 'delete':
 					return taskDeleteCommand({id: args[0], force: cli.flags.force});
+				case 'checklist': {
+					const [checklistAction, checklistTaskId] = args;
+					const indexFlag = cli.flags.index !== undefined ? Number(cli.flags.index) : undefined;
+					switch (checklistAction) {
+						case 'add':
+							return taskChecklistAddCommand({id: checklistTaskId, text: cli.flags.text});
+						case 'toggle':
+							return taskChecklistToggleCommand({id: checklistTaskId, index: indexFlag});
+						case 'remove':
+							return taskChecklistRemoveCommand({id: checklistTaskId, index: indexFlag});
+						default:
+							return React.createElement(
+								Text,
+								{color: 'red'},
+								'Unknown checklist action. Use: add, toggle, remove',
+							);
+					}
+				}
 				default:
 					return null;
 			}

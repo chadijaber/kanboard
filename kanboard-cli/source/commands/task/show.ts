@@ -21,6 +21,8 @@ export function taskShowCommand(options: TaskShowOptions): React.ReactNode {
 		);
 	}
 
+	const checklist = task.checklist ?? [];
+
 	return React.createElement(
 		Box,
 		{flexDirection: 'column'},
@@ -33,6 +35,7 @@ export function taskShowCommand(options: TaskShowOptions): React.ReactNode {
 			`Status: ${TASK_STATUS_LABELS[task.status]}`,
 		),
 		React.createElement(Text, null, `Owner: ${task.owner ?? '(unassigned)'}`),
+		React.createElement(Text, null, `Deadline: ${task.deadline ?? '(none)'}`),
 		React.createElement(Text, null, ''),
 		React.createElement(Text, {bold: true}, 'Description:'),
 		React.createElement(Text, null, task.description || '(no description)'),
@@ -44,6 +47,21 @@ export function taskShowCommand(options: TaskShowOptions): React.ReactNode {
 					{flexDirection: 'column'},
 					...task.requirements.map((req, i) =>
 						React.createElement(Text, {key: i}, `  - ${req}`),
+					),
+			  )
+			: React.createElement(Text, {dimColor: true}, '  (none)'),
+		React.createElement(Text, null, ''),
+		React.createElement(Text, {bold: true}, `Checklist (${checklist.filter(i => i.completed).length}/${checklist.length}):`),
+		checklist.length > 0
+			? React.createElement(
+					Box,
+					{flexDirection: 'column'},
+					...checklist.map((item, i) =>
+						React.createElement(
+							Text,
+							{key: i},
+							`  ${item.completed ? '[x]' : '[ ]'} ${item.text}`,
+						),
 					),
 			  )
 			: React.createElement(Text, {dimColor: true}, '  (none)'),

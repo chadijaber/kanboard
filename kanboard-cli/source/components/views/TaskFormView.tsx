@@ -6,11 +6,13 @@ import {
 	TaskStatus,
 	TASK_STATUS_ORDER,
 	TASK_STATUS_LABELS,
+	type ChecklistItem,
 } from '../../types/index.js';
+import {generateId} from '../../utils/id.js';
 
-type FormField = 'name' | 'description' | 'owner' | 'status';
+type FormField = 'name' | 'description' | 'owner' | 'deadline' | 'checklist' | 'status';
 
-const FIELDS: FormField[] = ['name', 'description', 'owner', 'status'];
+const FIELDS: FormField[] = ['name', 'description', 'owner', 'deadline', 'checklist', 'status'];
 
 export function TaskFormView() {
 	const {config, addTask, updateTask, addMember} = useKanboard();
@@ -27,6 +29,7 @@ export function TaskFormView() {
 	const nameRef = useRef(existingTask?.name ?? '');
 	const descriptionRef = useRef(existingTask?.description ?? '');
 	const ownerRef = useRef(existingTask?.owner ?? '');
+	const deadlineRef = useRef(existingTask?.deadline ?? '');
 	const [status, setStatus] = useState<TaskStatus>(
 		existingTask?.status ?? defaultStatus,
 	);
@@ -38,6 +41,14 @@ export function TaskFormView() {
 	const [ownerListIndex, setOwnerListIndex] = useState(0);
 	const [addingNewMember, setAddingNewMember] = useState(false);
 	const newMemberRef = useRef('');
+
+	// Checklist state
+	const [checklist, setChecklist] = useState<ChecklistItem[]>(
+		existingTask?.checklist ?? [],
+	);
+	const [checklistItemIndex, setChecklistItemIndex] = useState(0);
+	const [addingChecklistItem, setAddingChecklistItem] = useState(false);
+	const newChecklistItemRef = useRef('');
 
 	const moveToNextField = () => {
 		const currentIndex = FIELDS.indexOf(activeField);
@@ -68,21 +79,34 @@ export function TaskFormView() {
 			return;
 		}
 
+		const deadlineValue = deadlineRef.current.trim() || null;
+		if (deadlineValue && !/^\d{4}-\d{2}-\d{2}$/.test(deadlineValue)) {
+			setError('Deadline must be in YYYY-MM-DD format');
+			setActiveField('deadline');
+			return;
+		}
+
 		try {
 			if (isEditing && editingTaskId) {
 				updateTask(editingTaskId, {
 					name: nameRef.current.trim(),
 					description: descriptionRef.current.trim(),
 					owner: ownerRef.current.trim() || null,
+					deadline: deadlineValue,
+					checklist,
 					status,
 				});
 			} else {
-				addTask(
+				const task = addTask(
 					nameRef.current.trim(),
 					descriptionRef.current.trim(),
 					status,
 					ownerRef.current.trim() || null,
+					deadlineValue,
 				);
+				if (checklist.length > 0) {
+					updateTask(task.id, {checklist});
+				}
 			}
 			setActiveModal('none');
 		} catch (err) {
@@ -95,6 +119,11 @@ export function TaskFormView() {
 			if (addingNewMember) {
 				setAddingNewMember(false);
 				newMemberRef.current = '';
+				return;
+			}
+			if (addingChecklistItem) {
+				setAddingChecklistItem(false);
+				newChecklistItemRef.current = '';
 				return;
 			}
 			setActiveModal('none');
@@ -155,6 +184,66 @@ export function TaskFormView() {
 			// Allow clearing owner with delete/backspace
 			if (key.backspace || key.delete) {
 				ownerRef.current = '';
+				return;
+			}
+		}
+
+		if (activeField === 'checklist') {
+			if (addingChecklistItem) {
+				if (key.return) {
+					const text = newChecklistItemRef.current.trim();
+					if (text) {
+						setChecklist(prev => [
+							...prev,
+							{id: generateId(), text, completed: false},
+						]);
+					}
+					setAddingChecklistItem(false);
+					newChecklistItemRef.current = '';
+					return;
+				}
+				if (key.escape) {
+					setAddingChecklistItem(false);
+					newChecklistItemRef.current = '';
+					return;
+				}
+				if (key.backspace || key.delete) {
+					newChecklistItemRef.current = newChecklistItemRef.current.slice(0, -1);
+					return;
+				}
+				if (input && !key.ctrl && !key.meta && !key.tab) {
+					newChecklistItemRef.current = newChecklistItemRef.current + input;
+					return;
+				}
+				return;
+			}
+
+			if (input === 'a') {
+				newChecklistItemRef.current = '';
+				setAddingChecklistItem(true);
+				return;
+			}
+			if (input === 'd' && checklist.length > 0) {
+				setChecklist(prev => prev.filter((_, i) => i !== checklistItemIndex));
+				setChecklistItemIndex(i => Math.min(i, checklist.length - 2));
+				return;
+			}
+			if (input === ' ' && checklist.length > 0) {
+				setChecklist(prev =>
+					prev.map((item, i) =>
+						i === checklistItemIndex
+							? {...item, completed: !item.completed}
+							: item,
+					),
+				);
+				return;
+			}
+			if ((input === 'j' || key.downArrow) && checklist.length > 0) {
+				setChecklistItemIndex(i => Math.min(i + 1, checklist.length - 1));
+				return;
+			}
+			if ((input === 'k' || key.upArrow) && checklist.length > 0) {
+				setChecklistItemIndex(i => Math.max(i - 1, 0));
 				return;
 			}
 		}
@@ -282,6 +371,73 @@ export function TaskFormView() {
 		);
 	};
 
+	const renderChecklistField = () => {
+		const isActive = activeField === 'checklist';
+		if (!isActive) {
+			return (
+				<Box key="checklist">
+					<Box width={13}>
+						<Text>Checklist:</Text>
+					</Box>
+					<Text dimColor={checklist.length === 0}>
+						{checklist.length === 0
+							? '(none)'
+							: `${checklist.filter(i => i.completed).length}/${checklist.length} done`}
+					</Text>
+				</Box>
+			);
+		}
+
+		return (
+			<Box key="checklist" flexDirection="column">
+				<Box>
+					<Box width={13}>
+						<Text color="cyan">Checklist:</Text>
+					</Box>
+					<Text dimColor={checklist.length === 0}>
+						{checklist.length === 0 ? '(none)' : `${checklist.length} item(s)`}
+					</Text>
+				</Box>
+				<Box flexDirection="column" marginLeft={13}>
+					{checklist.map((item, i) => (
+						<Text
+							key={item.id}
+							color={i === checklistItemIndex ? 'cyan' : undefined}
+						>
+							{i === checklistItemIndex ? '>' : ' '} {item.completed ? '[x]' : '[ ]'}{' '}
+							{item.text}
+						</Text>
+					))}
+					{addingChecklistItem && (
+						<Box>
+							<Text color="cyan">{'> [ ] '}</Text>
+							<TextInputSimple
+								defaultValue={newChecklistItemRef.current}
+								onChange={v => {
+									newChecklistItemRef.current = v;
+								}}
+								onSubmit={() => {
+									const text = newChecklistItemRef.current.trim();
+									if (text) {
+										setChecklist(prev => [
+											...prev,
+											{id: generateId(), text, completed: false},
+										]);
+									}
+									setAddingChecklistItem(false);
+									newChecklistItemRef.current = '';
+								}}
+							/>
+						</Box>
+					)}
+					<Text dimColor>
+						a: add | d: delete | Space: toggle | j/k: navigate
+					</Text>
+				</Box>
+			</Box>
+		);
+	};
+
 	return (
 		<Box
 			flexDirection="column"
@@ -302,6 +458,8 @@ export function TaskFormView() {
 				{renderTextField('name', 'Name', nameRef)}
 				{renderTextField('description', 'Description', descriptionRef)}
 				{renderOwnerField()}
+				{renderTextField('deadline', 'Deadline', deadlineRef)}
+				{renderChecklistField()}
 
 				<Box>
 					<Box width={13}>

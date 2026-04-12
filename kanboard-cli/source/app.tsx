@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {Box, Text, useInput, useApp, useStdout} from 'ink';
 import {KanboardProvider, useKanboard} from './context/KanboardContext.js';
 import {
@@ -16,6 +16,8 @@ import {DocsView} from './components/views/DocsView.js';
 import {DocViewView} from './components/views/DocViewView.js';
 import {DocFormView} from './components/views/DocFormView.js';
 import {CommandInputView} from './components/views/CommandInputView.js';
+import {DeadlineWarningView} from './components/views/DeadlineWarningView.js';
+import {daysUntilDeadline} from './utils/date.js';
 import type {ViewType} from './types/index.js';
 
 function AppContent() {
@@ -23,6 +25,18 @@ function AppContent() {
 	const {stdout} = useStdout();
 	const {config, error, currentView, setCurrentView} = useKanboard();
 	const {activeModal, setActiveModal} = useNavigation();
+	const deadlineWarningShown = useRef(false);
+
+	useEffect(() => {
+		if (!config || deadlineWarningShown.current) return;
+		const hasUrgent = config.tasks.some(
+			t => t.deadline && daysUntilDeadline(t.deadline) < 3,
+		);
+		if (hasUrgent) {
+			deadlineWarningShown.current = true;
+			setActiveModal('deadline-warning');
+		}
+	}, [config, setActiveModal]);
 
 	const width = stdout?.columns ?? 80;
 
@@ -80,6 +94,8 @@ function AppContent() {
 				return <ConfirmDialog />;
 			case 'command-input':
 				return <CommandInputView />;
+			case 'deadline-warning':
+				return <DeadlineWarningView />;
 			default:
 				return null;
 		}

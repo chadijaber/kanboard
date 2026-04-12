@@ -25,13 +25,13 @@ interface KanboardContextValue {
 	addMember: (name: string) => void;
 
 	// Tasks
-	addTask: (name: string, description?: string, status?: TaskStatus, owner?: string | null) => Task;
+	addTask: (name: string, description?: string, status?: TaskStatus, owner?: string | null, deadline?: string | null) => Task;
 	updateTask: (
 		id: string,
 		updates: Partial<
 			Pick<
 				Task,
-				'name' | 'description' | 'owner' | 'requirements' | 'status' | 'order'
+				'name' | 'description' | 'owner' | 'requirements' | 'checklist' | 'deadline' | 'status' | 'order'
 			>
 		>,
 	) => void;
@@ -107,6 +107,7 @@ export function KanboardProvider({
 			description = '',
 			status: TaskStatus = 'backlog' as TaskStatus,
 			owner: string | null = null,
+			deadline: string | null = null,
 		): Task => {
 			if (!config) throw new Error('No config loaded');
 
@@ -123,6 +124,8 @@ export function KanboardProvider({
 				description,
 				owner,
 				requirements: [],
+				checklist: [],
+				deadline,
 				status,
 				createdAt: now,
 				updatedAt: now,
@@ -145,7 +148,7 @@ export function KanboardProvider({
 			updates: Partial<
 				Pick<
 					Task,
-					'name' | 'description' | 'owner' | 'requirements' | 'status' | 'order'
+					'name' | 'description' | 'owner' | 'requirements' | 'checklist' | 'deadline' | 'status' | 'order'
 				>
 			>,
 		) => {

@@ -1,15 +1,47 @@
 import React from 'react';
 import {Box, Text} from 'ink';
 import type {Task} from '../../types/index.js';
-import {formatCreatedDate, relativeTime} from '../../utils/date.js';
+import {
+	formatCreatedDate,
+	relativeTime,
+	daysUntilDeadline,
+	formatDeadlineShort,
+} from '../../utils/date.js';
 
 interface TaskCardProps {
 	task: Task;
 	isSelected: boolean;
 	width: number;
+	checklistMode?: boolean;
+	checklistIndex?: number;
 }
 
-export function TaskCard({task, isSelected, width}: TaskCardProps) {
+export function TaskCard({
+	task,
+	isSelected,
+	width,
+	checklistMode = false,
+	checklistIndex = 0,
+}: TaskCardProps) {
+	const checklist = task.checklist ?? [];
+
+	const deadlineColor = (() => {
+		if (!task.deadline) return undefined;
+		const days = daysUntilDeadline(task.deadline);
+		if (days <= 0) return 'red';
+		if (days <= 3) return 'yellow';
+		return undefined;
+	})();
+
+	const deadlineLabel = (() => {
+		if (!task.deadline) return null;
+		const days = daysUntilDeadline(task.deadline);
+		const formatted = formatDeadlineShort(task.deadline);
+		if (days <= 0) return `Overdue: ${formatted}`;
+		if (days <= 3) return days === 1 ? 'tomorrow' : `${days} days left`;
+		return `${formatted}`;
+	})();
+
 	return (
 		<Box
 			flexDirection="column"
@@ -23,7 +55,30 @@ export function TaskCard({task, isSelected, width}: TaskCardProps) {
 			<Text bold wrap="wrap">
 				{task.name}
 			</Text>
-			{task.owner && <Text color="blue">@{task.owner}</Text>}
+			{task.owner ? <Text color="blue">@{task.owner}</Text> : null}
+			{task.deadline ? (
+				<Text color={deadlineColor}>{deadlineLabel}</Text>
+			) : null}
+			{checklist.length > 0 ? (
+				checklistMode ? (
+					<Box flexDirection="column" marginTop={0}>
+						{checklist.map((item, i) => (
+							<Text
+								key={item.id}
+								color={i === checklistIndex ? 'cyan' : undefined}
+							>
+								{i === checklistIndex ? '>' : ' '}{' '}
+								{item.completed ? '[x]' : '[ ]'} {item.text}
+							</Text>
+						))}
+						<Text dimColor>j/k: navigate | Space: toggle | Esc: exit</Text>
+					</Box>
+				) : (
+					<Text dimColor>
+						☑ {checklist.filter(i => i.completed).length}/{checklist.length}
+					</Text>
+				)
+			) : null}
 		</Box>
 	);
 }

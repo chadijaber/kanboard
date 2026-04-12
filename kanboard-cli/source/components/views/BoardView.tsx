@@ -15,7 +15,7 @@ interface BoardViewProps {
 }
 
 export function BoardView({width}: BoardViewProps) {
-	const {config, moveTask, deleteTask, setSelectedTaskId} = useKanboard();
+	const {config, moveTask, deleteTask, setSelectedTaskId, updateTask} = useKanboard();
 	const {
 		selectedColumn,
 		selectedRow,
@@ -32,6 +32,8 @@ export function BoardView({width}: BoardViewProps) {
 	} = useNavigation();
 
 	const [moveMode, setMoveMode] = useState(false);
+	const [checklistMode, setChecklistMode] = useState(false);
+	const [checklistIndex, setChecklistIndex] = useState(0);
 
 	const tasksByStatus = useMemo(() => {
 		if (!config) return new Map<TaskStatus, Task[]>();
@@ -46,6 +48,31 @@ export function BoardView({width}: BoardViewProps) {
 
 	useInput((input, key) => {
 		if (!config) return;
+
+		// Handle checklist mode
+		if (checklistMode) {
+			const checklist = selectedTask?.checklist ?? [];
+			if (key.escape) {
+				setChecklistMode(false);
+				return;
+			}
+			if ((input === 'j' || key.downArrow) && checklist.length > 0) {
+				setChecklistIndex(i => Math.min(i + 1, checklist.length - 1));
+				return;
+			}
+			if ((input === 'k' || key.upArrow) && checklist.length > 0) {
+				setChecklistIndex(i => Math.max(i - 1, 0));
+				return;
+			}
+			if (input === ' ' && selectedTask && checklist.length > 0) {
+				const updated = checklist.map((item, idx) =>
+					idx === checklistIndex ? {...item, completed: !item.completed} : item,
+				);
+				updateTask(selectedTask.id, {checklist: updated});
+				return;
+			}
+			return;
+		}
 
 		// Handle move mode
 		if (moveMode) {
@@ -107,6 +134,11 @@ export function BoardView({width}: BoardViewProps) {
 			setMoveMode(true);
 		}
 
+		if (input === 'c' && selectedTask && (selectedTask.checklist ?? []).length > 0) {
+			setChecklistIndex(0);
+			setChecklistMode(true);
+		}
+
 		if (input === 'd' && selectedTask) {
 			setConfirmMessage(`Delete task "${selectedTask.name}"?`);
 			setConfirmAction(() => () => {
@@ -141,6 +173,8 @@ export function BoardView({width}: BoardViewProps) {
 						isSelected={index === selectedColumn}
 						selectedTaskIndex={index === selectedColumn ? selectedRow : -1}
 						width={columnWidth}
+						checklistMode={index === selectedColumn && checklistMode}
+						checklistIndex={checklistIndex}
 					/>
 				))}
 			</Box>

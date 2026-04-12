@@ -39,6 +39,15 @@ export function readConfig(configPath?: string): KanboardConfig | null {
 		if (!Array.isArray(config.members)) {
 			config.members = [];
 		}
+		// Migration: add checklist and deadline fields to existing tasks
+		for (const task of config.tasks) {
+			if (!Array.isArray(task.checklist)) {
+				task.checklist = [];
+			}
+			if (!('deadline' in task)) {
+				(task as any).deadline = null;
+			}
+		}
 		return config;
 	} catch {
 		return null;

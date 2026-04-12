@@ -10,6 +10,8 @@ interface ColumnProps {
 	isSelected: boolean;
 	selectedTaskIndex: number;
 	width: number;
+	checklistMode?: boolean;
+	checklistIndex?: number;
 }
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
@@ -26,6 +28,8 @@ export function Column({
 	isSelected,
 	selectedTaskIndex,
 	width,
+	checklistMode = false,
+	checklistIndex = 0,
 }: ColumnProps) {
 	const color = STATUS_COLORS[status];
 	const cardWidth = width - 4;
@@ -60,6 +64,8 @@ export function Column({
 							task={task}
 							isSelected={isSelected && index === selectedTaskIndex}
 							width={cardWidth}
+							checklistMode={isSelected && index === selectedTaskIndex && checklistMode}
+							checklistIndex={checklistIndex}
 						/>
 					))
 				)}

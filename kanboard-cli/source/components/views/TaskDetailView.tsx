@@ -3,16 +3,19 @@ import {Box, Text, useInput} from 'ink';
 import {useKanboard} from '../../context/KanboardContext.js';
 import {useNavigation} from '../../context/NavigationContext.js';
 import {TASK_STATUS_LABELS} from '../../types/index.js';
+import {daysUntilDeadline, formatDeadlineShort} from '../../utils/date.js';
 
 export function TaskDetailView() {
 	const {config, selectedTaskId} = useKanboard();
 	const {setActiveModal, setEditingTaskId} = useNavigation();
 
 	const task = config?.tasks.find(t => t.id === selectedTaskId);
+	const checklist = task?.checklist ?? [];
 
 	useInput((input, key) => {
 		if (key.escape) {
 			setActiveModal('none');
+			return;
 		}
 
 		if (input === 'e' && task) {
@@ -28,6 +31,23 @@ export function TaskDetailView() {
 			</Box>
 		);
 	}
+
+	const deadlineColor = (() => {
+		if (!task.deadline) return undefined;
+		const days = daysUntilDeadline(task.deadline);
+		if (days <= 0) return 'red';
+		if (days <= 3) return 'yellow';
+		return undefined;
+	})();
+
+	const deadlineLabel = (() => {
+		if (!task.deadline) return '(none)';
+		const days = daysUntilDeadline(task.deadline);
+		const formatted = formatDeadlineShort(task.deadline);
+		if (days <= 0) return `${formatted} (overdue)`;
+		if (days === 1) return `${formatted} (tomorrow)`;
+		return `${formatted} (${days} days left)`;
+	})();
 
 	return (
 		<Box
@@ -58,6 +78,12 @@ export function TaskDetailView() {
 				</Box>
 				<Text>{task.owner ?? '(unassigned)'}</Text>
 			</Box>
+			<Box>
+				<Box width={12}>
+					<Text dimColor>Deadline:</Text>
+				</Box>
+				<Text color={deadlineColor}>{deadlineLabel}</Text>
+			</Box>
 			<Box marginTop={1} flexDirection="column">
 				<Text dimColor>Description:</Text>
 				<Text>{task.description || '(no description)'}</Text>
@@ -70,6 +96,22 @@ export function TaskDetailView() {
 					))}
 				</Box>
 			)}
+			{checklist.length > 0 && (
+				<Box marginTop={1} flexDirection="column">
+					<Text dimColor>
+						Checklist ({checklist.filter(i => i.completed).length}/
+						{checklist.length}):
+					</Text>
+					{checklist.map(item => (
+						<Box key={item.id}>
+							<Text>
+								{' '}
+								{item.completed ? '[x]' : '[ ]'} {item.text}
+							</Text>
+						</Box>
+					))}
+				</Box>
+			)}
 			<Box marginTop={1}>
 				<Text dimColor>Created: {task.createdAt}</Text>
 			</Box>
@@ -77,11 +119,10 @@ export function TaskDetailView() {
 				<Text dimColor>Updated: {task.updatedAt}</Text>
 			</Box>
 			<Box marginTop={1}>
-				<Text dimColor>Press </Text>
-				<Text color="yellow">e</Text>
-				<Text dimColor> to edit, </Text>
-				<Text color="yellow">Esc</Text>
-				<Text dimColor> to close</Text>
+				<Text dimColor>
+					Press <Text color="yellow">e</Text> to edit,{' '}
+					<Text color="yellow">Esc</Text> to close
+				</Text>
 			</Box>
 		</Box>
 	);

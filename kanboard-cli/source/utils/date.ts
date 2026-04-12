@@ -1,3 +1,21 @@
+export function daysUntilDeadline(deadline: string): number {
+	const deadlineDate = new Date(deadline);
+	deadlineDate.setHours(23, 59, 59, 999);
+	const diffMs = deadlineDate.getTime() - Date.now();
+	return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+}
+
+export function formatDeadlineShort(deadline: string): string {
+	const date = new Date(deadline);
+	const now = new Date();
+	const sameYear = date.getFullYear() === now.getFullYear();
+	return date.toLocaleDateString('en-US', {
+		month: 'short',
+		day: 'numeric',
+		...(sameYear ? {} : {year: 'numeric'}),
+	});
+}
+
 export function formatCreatedDate(isoString: string): string {
 	const date = new Date(isoString);
 	return date.toLocaleDateString('en-US', {

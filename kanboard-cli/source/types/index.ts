@@ -22,12 +22,20 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
 	[TaskStatus.DONE]: 'Done',
 };
 
+export interface ChecklistItem {
+	id: string;
+	text: string;
+	completed: boolean;
+}
+
 export interface Task {
 	id: string;
 	name: string;
 	description: string;
 	owner: string | null;
 	requirements: string[];
+	checklist: ChecklistItem[];
+	deadline: string | null;
 	status: TaskStatus;
 	createdAt: string;
 	updatedAt: string;

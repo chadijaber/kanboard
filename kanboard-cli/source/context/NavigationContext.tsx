@@ -15,7 +15,8 @@ export type ModalType =
 	| 'doc-view'
 	| 'help'
 	| 'confirm-delete'
-	| 'command-input';
+	| 'command-input'
+	| 'deadline-warning';
 
 interface NavigationContextValue {
 	// Board navigation
