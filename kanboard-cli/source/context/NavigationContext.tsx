@@ -14,7 +14,8 @@ export type ModalType =
 	| 'doc-form'
 	| 'doc-view'
 	| 'help'
-	| 'confirm-delete';
+	| 'confirm-delete'
+	| 'command-input';
 
 interface NavigationContextValue {
 	// Board navigation

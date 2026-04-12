@@ -34,7 +34,12 @@ export function readConfig(configPath?: string): KanboardConfig | null {
 
 	try {
 		const content = fs.readFileSync(resolvedPath, 'utf-8');
-		return JSON.parse(content) as KanboardConfig;
+		const config = JSON.parse(content) as KanboardConfig;
+		// Migration: add members field if missing from older configs
+		if (!Array.isArray(config.members)) {
+			config.members = [];
+		}
+		return config;
 	} catch {
 		return null;
 	}
@@ -57,6 +62,7 @@ export function createDefaultConfig(project: Partial<Project>): KanboardConfig {
 			createdAt: now,
 			updatedAt: now,
 		},
+		members: [],
 		tasks: [],
 		docs: [],
 	};

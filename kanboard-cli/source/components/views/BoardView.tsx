@@ -38,7 +38,7 @@ export function BoardView({width}: BoardViewProps) {
 		return getTasksByStatus(config);
 	}, [config]);
 
-	const columnWidth = Math.floor((width - 2) / TASK_STATUS_ORDER.length);
+	const columnWidth = Math.floor(width / TASK_STATUS_ORDER.length);
 
 	const currentStatus = getStatusForColumn(selectedColumn);
 	const currentTasks = tasksByStatus.get(currentStatus) ?? [];

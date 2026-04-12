@@ -21,29 +21,29 @@ import {docDeleteCommand} from './commands/doc/delete.js';
 const cli = meow(
 	`
 	Usage
-	  $ kanboard                    Launch interactive TUI
-	  $ kanboard board              Jump to board view
-	  $ kanboard docs               Jump to docs view
+	  $ kanboard-cli                    Launch interactive TUI
+	  $ kanboard-cli board              Jump to board view
+	  $ kanboard-cli docs               Jump to docs view
 
 	Project Commands
-	  $ kanboard init               Initialize a new project
-	  $ kanboard status             Show task counts per column
-	  $ kanboard config             View/update project settings
+	  $ kanboard-cli init               Initialize a new project
+	  $ kanboard-cli status             Show task counts per column
+	  $ kanboard-cli config             View/update project settings
 
 	Task Commands
-	  $ kanboard task add           Create a new task
-	  $ kanboard task list          List all tasks
-	  $ kanboard task show <id>     Show task details
-	  $ kanboard task update <id>   Update a task
-	  $ kanboard task move <id> <status>  Move task to status
-	  $ kanboard task delete <id>   Delete a task
+	  $ kanboard-cli task add           Create a new task
+	  $ kanboard-cli task list          List all tasks
+	  $ kanboard-cli task show <id>     Show task details
+	  $ kanboard-cli task update <id>   Update a task
+	  $ kanboard-cli task move <id> <status>  Move task to status
+	  $ kanboard-cli task delete <id>   Delete a task
 
 	Doc Commands
-	  $ kanboard doc add            Create a new doc
-	  $ kanboard doc list           List all docs
-	  $ kanboard doc read <path>    Read a doc
-	  $ kanboard doc update <path>  Update a doc
-	  $ kanboard doc delete <path>  Delete a doc
+	  $ kanboard-cli doc add            Create a new doc
+	  $ kanboard-cli doc list           List all docs
+	  $ kanboard-cli doc read <path>    Read a doc
+	  $ kanboard-cli doc update <path>  Update a doc
+	  $ kanboard-cli doc delete <path>  Delete a doc
 
 	Options
 	  --name, -n         Name (for init, task add, doc add)

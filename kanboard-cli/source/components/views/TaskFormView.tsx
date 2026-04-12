@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useRef} from 'react';
 import {Box, Text, useInput} from 'ink';
 import {useKanboard} from '../../context/KanboardContext.js';
 import {useNavigation} from '../../context/NavigationContext.js';
@@ -13,7 +13,7 @@ type FormField = 'name' | 'description' | 'owner' | 'status';
 const FIELDS: FormField[] = ['name', 'description', 'owner', 'status'];
 
 export function TaskFormView() {
-	const {config, addTask, updateTask} = useKanboard();
+	const {config, addTask, updateTask, addMember} = useKanboard();
 	const {setActiveModal, editingTaskId, getStatusForColumn, selectedColumn} =
 		useNavigation();
 
@@ -33,14 +33,11 @@ export function TaskFormView() {
 	const [activeField, setActiveField] = useState<FormField>('name');
 	const [error, setError] = useState<string | null>(null);
 
-	useEffect(() => {
-		if (existingTask) {
-			nameRef.current = existingTask.name;
-			descriptionRef.current = existingTask.description;
-			ownerRef.current = existingTask.owner ?? '';
-			setStatus(existingTask.status);
-		}
-	}, [existingTask]);
+	// Owner selector state
+	const members = config?.members ?? [];
+	const [ownerListIndex, setOwnerListIndex] = useState(0);
+	const [addingNewMember, setAddingNewMember] = useState(false);
+	const newMemberRef = useRef('');
 
 	const moveToNextField = () => {
 		const currentIndex = FIELDS.indexOf(activeField);
@@ -80,7 +77,12 @@ export function TaskFormView() {
 					status,
 				});
 			} else {
-				addTask(nameRef.current.trim(), descriptionRef.current.trim(), status);
+				addTask(
+					nameRef.current.trim(),
+					descriptionRef.current.trim(),
+					status,
+					ownerRef.current.trim() || null,
+				);
 			}
 			setActiveModal('none');
 		} catch (err) {
@@ -90,8 +92,71 @@ export function TaskFormView() {
 
 	useInput((input, key) => {
 		if (key.escape) {
+			if (addingNewMember) {
+				setAddingNewMember(false);
+				newMemberRef.current = '';
+				return;
+			}
 			setActiveModal('none');
 			return;
+		}
+
+		if (activeField === 'owner') {
+			if (addingNewMember) {
+				// Handle text input for new member name
+				if (key.return) {
+					const name = newMemberRef.current.trim();
+					if (name) {
+						addMember(name);
+						ownerRef.current = name;
+					}
+					setAddingNewMember(false);
+					newMemberRef.current = '';
+					moveToNextField();
+					return;
+				}
+				if (key.backspace || key.delete) {
+					newMemberRef.current = newMemberRef.current.slice(0, -1);
+					return;
+				}
+				if (input && !key.ctrl && !key.meta && !key.tab) {
+					newMemberRef.current = newMemberRef.current + input;
+					return;
+				}
+				if (key.tab) {
+					if (key.shift) moveToPrevField();
+					else moveToNextField();
+				}
+				return;
+			}
+
+			// Owner list navigation
+			const listCount = members.length + 1; // +1 for "Add new"
+			if (input === 'j' || key.downArrow) {
+				setOwnerListIndex(i => Math.min(i + 1, listCount - 1));
+				return;
+			}
+			if (input === 'k' || key.upArrow) {
+				setOwnerListIndex(i => Math.max(i - 1, 0));
+				return;
+			}
+			if (key.return) {
+				if (ownerListIndex === members.length) {
+					// "Add new member" selected
+					setAddingNewMember(true);
+					newMemberRef.current = '';
+				} else {
+					const selected = members[ownerListIndex];
+					ownerRef.current = selected ?? '';
+					moveToNextField();
+				}
+				return;
+			}
+			// Allow clearing owner with delete/backspace
+			if (key.backspace || key.delete) {
+				ownerRef.current = '';
+				return;
+			}
 		}
 
 		if (key.tab) {
@@ -118,19 +183,18 @@ export function TaskFormView() {
 		field: FormField,
 		label: string,
 		ref: React.MutableRefObject<string>,
-		defaultValue: string,
 	) => {
 		const isActive = activeField === field;
 		return (
 			<Box key={field}>
-				<Box width={12}>
+				<Box width={13}>
 					<Text color={isActive ? 'cyan' : undefined}>{label}:</Text>
 				</Box>
 				{isActive ? (
 					<Box>
-						<Text color="cyan">\u25B6 </Text>
+						<Text color="cyan">{'> '}</Text>
 						<TextInputSimple
-							defaultValue={defaultValue}
+							defaultValue={ref.current}
 							onChange={v => {
 								ref.current = v;
 							}}
@@ -140,6 +204,80 @@ export function TaskFormView() {
 				) : (
 					<Text dimColor={!ref.current}>{ref.current || '(empty)'}</Text>
 				)}
+			</Box>
+		);
+	};
+
+	const renderOwnerField = () => {
+		const isActive = activeField === 'owner';
+
+		if (!isActive) {
+			return (
+				<Box key="owner">
+					<Box width={13}>
+						<Text>Owner:</Text>
+					</Box>
+					<Text dimColor={!ownerRef.current}>
+						{ownerRef.current || '(none)'}
+					</Text>
+				</Box>
+			);
+		}
+
+		if (addingNewMember) {
+			return (
+				<Box key="owner" flexDirection="column">
+					<Box>
+						<Box width={13}>
+							<Text color="cyan">Owner:</Text>
+						</Box>
+						<Text color="cyan">{'> '}</Text>
+						<TextInputSimple
+							defaultValue={newMemberRef.current}
+							onChange={v => {
+								newMemberRef.current = v;
+							}}
+							onSubmit={() => {
+								const name = newMemberRef.current.trim();
+								if (name) {
+									addMember(name);
+									ownerRef.current = name;
+								}
+								setAddingNewMember(false);
+								newMemberRef.current = '';
+								moveToNextField();
+							}}
+						/>
+					</Box>
+					<Box marginLeft={13}>
+						<Text dimColor>Type name + Enter to add</Text>
+					</Box>
+				</Box>
+			);
+		}
+
+		const listItems = [...members, '+ Add new member'];
+		return (
+			<Box key="owner" flexDirection="column">
+				<Box>
+					<Box width={13}>
+						<Text color="cyan">Owner:</Text>
+					</Box>
+					<Text dimColor={!ownerRef.current}>
+						{ownerRef.current || '(none)'}
+					</Text>
+				</Box>
+				<Box flexDirection="column" marginLeft={13} marginTop={0}>
+					{listItems.map((item, i) => (
+						<Box key={item}>
+							<Text color={i === ownerListIndex ? 'cyan' : undefined}>
+								{i === ownerListIndex ? '> ' : '  '}
+								{item}
+							</Text>
+						</Box>
+					))}
+					<Text dimColor>j/k: navigate | Enter: select | Backspace: clear</Text>
+				</Box>
 			</Box>
 		);
 	};
@@ -161,27 +299,22 @@ export function TaskFormView() {
 				</Box>
 			)}
 			<Box flexDirection="column" marginTop={1} gap={1}>
-				{renderTextField('name', 'Name', nameRef, existingTask?.name ?? '')}
-				{renderTextField(
-					'description',
-					'Description',
-					descriptionRef,
-					existingTask?.description ?? '',
-				)}
-				{renderTextField('owner', 'Owner', ownerRef, existingTask?.owner ?? '')}
+				{renderTextField('name', 'Name', nameRef)}
+				{renderTextField('description', 'Description', descriptionRef)}
+				{renderOwnerField()}
 
 				<Box>
-					<Box width={12}>
+					<Box width={13}>
 						<Text color={activeField === 'status' ? 'cyan' : undefined}>
 							Status:
 						</Text>
 					</Box>
 					<Box>
-						{activeField === 'status' && <Text color="yellow">\u25C0 </Text>}
+						{activeField === 'status' && <Text color="yellow">{'< '}</Text>}
 						<Text bold={activeField === 'status'}>
 							{TASK_STATUS_LABELS[status]}
 						</Text>
-						{activeField === 'status' && <Text color="yellow"> \u25B6</Text>}
+						{activeField === 'status' && <Text color="yellow">{' >'}</Text>}
 					</Box>
 				</Box>
 			</Box>
@@ -218,7 +351,7 @@ function TextInputSimple({
 			return;
 		}
 
-		if (input && !key.ctrl && !key.meta) {
+		if (input && !key.ctrl && !key.meta && !key.tab) {
 			const newValue = value + input;
 			setValue(newValue);
 			onChange(newValue);

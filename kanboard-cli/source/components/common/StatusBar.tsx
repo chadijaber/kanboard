@@ -32,6 +32,11 @@ export function StatusBar() {
 		];
 	} else if (activeModal === 'help') {
 		bindings = [{key: 'Esc/?', label: 'Close'}];
+	} else if (activeModal === 'command-input') {
+		bindings = [
+			{key: 'Enter', label: 'Run'},
+			{key: 'Esc', label: 'Cancel'},
+		];
 	} else if (currentView === 'board') {
 		bindings = [
 			{key: 'h/l', label: 'Columns'},
@@ -40,6 +45,7 @@ export function StatusBar() {
 			{key: 'n', label: 'New'},
 			{key: 'm', label: 'Move'},
 			{key: 'd', label: 'Delete'},
+			{key: ':', label: 'Command'},
 			{key: 'Tab', label: 'Docs'},
 			{key: '?', label: 'Help'},
 			{key: 'q', label: 'Quit'},
@@ -51,6 +57,7 @@ export function StatusBar() {
 			{key: 'h', label: 'Collapse'},
 			{key: 'n', label: 'New'},
 			{key: 'd', label: 'Delete'},
+			{key: ':', label: 'Command'},
 			{key: 'Tab', label: 'Board'},
 			{key: '?', label: 'Help'},
 			{key: 'q', label: 'Quit'},

@@ -15,6 +15,7 @@ import {TaskFormView} from './components/views/TaskFormView.js';
 import {DocsView} from './components/views/DocsView.js';
 import {DocViewView} from './components/views/DocViewView.js';
 import {DocFormView} from './components/views/DocFormView.js';
+import {CommandInputView} from './components/views/CommandInputView.js';
 import type {ViewType} from './types/index.js';
 
 function AppContent() {
@@ -37,6 +38,10 @@ function AppContent() {
 			setActiveModal('help');
 		}
 
+		if (input === ':') {
+			setActiveModal('command-input');
+		}
+
 		if (key.tab) {
 			setCurrentView(currentView === 'board' ? 'docs' : 'board');
 		}
@@ -46,7 +51,7 @@ function AppContent() {
 		return (
 			<Box flexDirection="column" padding={1}>
 				<Text color="red">{error}</Text>
-				<Text dimColor>Run "kanboard init" to create a new project.</Text>
+				<Text dimColor>Run "kanboard-cli init" to create a new project.</Text>
 			</Box>
 		);
 	}
@@ -73,16 +78,14 @@ function AppContent() {
 				return <HelpOverlay />;
 			case 'confirm-delete':
 				return <ConfirmDialog />;
+			case 'command-input':
+				return <CommandInputView />;
 			default:
 				return null;
 		}
 	};
 
 	const renderView = () => {
-		if (activeModal !== 'none') {
-			return renderModal();
-		}
-
 		if (currentView === 'board') {
 			return <BoardView width={width} />;
 		}
@@ -90,10 +93,15 @@ function AppContent() {
 		return <DocsView />;
 	};
 
+	// command-input overlays the board/docs without replacing it
+	const isCommandInput = activeModal === 'command-input';
+	const isOtherModal = activeModal !== 'none' && !isCommandInput;
+
 	return (
 		<Box flexDirection="column">
 			<Header />
-			{renderView()}
+			{isOtherModal ? renderModal() : renderView()}
+			{isCommandInput && <CommandInputView />}
 			<StatusBar />
 		</Box>
 	);

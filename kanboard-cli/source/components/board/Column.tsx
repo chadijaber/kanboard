@@ -28,7 +28,7 @@ export function Column({
 	width,
 }: ColumnProps) {
 	const color = STATUS_COLORS[status];
-	const cardWidth = width - 2;
+	const cardWidth = width - 4;
 
 	return (
 		<Box

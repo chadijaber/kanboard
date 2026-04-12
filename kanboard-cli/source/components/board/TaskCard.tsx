@@ -10,12 +10,6 @@ interface TaskCardProps {
 }
 
 export function TaskCard({task, isSelected, width}: TaskCardProps) {
-	const maxNameLength = width - 4;
-	const displayName =
-		task.name.length > maxNameLength
-			? task.name.slice(0, maxNameLength - 1) + '\u2026'
-			: task.name;
-
 	return (
 		<Box
 			flexDirection="column"
@@ -24,8 +18,8 @@ export function TaskCard({task, isSelected, width}: TaskCardProps) {
 			paddingX={1}
 			width={width}
 		>
-			<Text bold wrap="truncate">
-				{displayName}
+			<Text bold wrap="wrap">
+				{task.name}
 			</Text>
 			<Box>
 				<Text dimColor>{shortId(task.id)}</Text>

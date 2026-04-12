@@ -21,8 +21,11 @@ interface KanboardContextValue {
 	error: string | null;
 	reload: () => void;
 
+	// Members
+	addMember: (name: string) => void;
+
 	// Tasks
-	addTask: (name: string, description?: string, status?: TaskStatus) => Task;
+	addTask: (name: string, description?: string, status?: TaskStatus, owner?: string | null) => Task;
 	updateTask: (
 		id: string,
 		updates: Partial<
@@ -75,7 +78,7 @@ export function KanboardProvider({
 			setConfig(loaded);
 			setError(null);
 		} else {
-			setError('No kanboard project found. Run "kanboard init" first.');
+			setError('No kanboard project found. Run "kanboard-cli init" first.');
 		}
 	}, []);
 
@@ -88,11 +91,22 @@ export function KanboardProvider({
 		setConfig(newConfig);
 	}, []);
 
+	const addMember = useCallback(
+		(name: string) => {
+			if (!config) return;
+			const trimmed = name.trim();
+			if (!trimmed || config.members.includes(trimmed)) return;
+			saveConfig({...config, members: [...config.members, trimmed]});
+		},
+		[config, saveConfig],
+	);
+
 	const addTask = useCallback(
 		(
 			name: string,
 			description = '',
 			status: TaskStatus = 'backlog' as TaskStatus,
+			owner: string | null = null,
 		): Task => {
 			if (!config) throw new Error('No config loaded');
 
@@ -107,7 +121,7 @@ export function KanboardProvider({
 				id: generateId(),
 				name,
 				description,
-				owner: null,
+				owner,
 				requirements: [],
 				status,
 				createdAt: now,
@@ -257,6 +271,7 @@ export function KanboardProvider({
 		config,
 		error,
 		reload,
+		addMember,
 		addTask,
 		updateTask,
 		deleteTask,

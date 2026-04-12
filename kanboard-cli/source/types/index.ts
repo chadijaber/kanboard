@@ -54,6 +54,7 @@ export interface Project {
 export interface KanboardConfig {
 	version: '1.0';
 	project: Project;
+	members: string[];
 	tasks: Task[];
 	docs: Doc[];
 }
