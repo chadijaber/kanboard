@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Text} from 'ink';
 import type {Task} from '../../types/index.js';
-import {shortId} from '../../utils/id.js';
+import {formatCreatedDate, relativeTime} from '../../utils/date.js';
 
 interface TaskCardProps {
 	task: Task;
@@ -18,13 +18,12 @@ export function TaskCard({task, isSelected, width}: TaskCardProps) {
 			paddingX={1}
 			width={width}
 		>
+			<Text dimColor>{formatCreatedDate(task.createdAt)}</Text>
+			<Text dimColor>({relativeTime(task.createdAt)})</Text>
 			<Text bold wrap="wrap">
 				{task.name}
 			</Text>
-			<Box>
-				<Text dimColor>{shortId(task.id)}</Text>
-				{task.owner && <Text color="blue"> @{task.owner}</Text>}
-			</Box>
+			{task.owner && <Text color="blue">@{task.owner}</Text>}
 		</Box>
 	);
 }
