@@ -195,13 +195,22 @@ export function KanboardProvider({
 				-1,
 			);
 
+			const updates: Partial<Task> = {
+				status,
+				order: maxOrder + 1,
+				updatedAt: new Date().toISOString(),
+			};
+
+			// When moving to Done, replace deadline with completion date
+			if (status === 'done') {
+				updates.deadline = new Date().toISOString();
+			}
+
 			const newTasks = config.tasks.map(t => {
 				if (t.id === id) {
 					return {
 						...t,
-						status,
-						order: maxOrder + 1,
-						updatedAt: new Date().toISOString(),
+						...updates,
 					};
 				}
 				return t;

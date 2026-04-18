@@ -34,6 +34,7 @@ export function TaskDetailView() {
 
 	const deadlineColor = (() => {
 		if (!task.deadline) return undefined;
+		if (task.status === 'done') return undefined;
 		const days = daysUntilDeadline(task.deadline);
 		if (days <= 0) return 'red';
 		if (days <= 3) return 'yellow';
@@ -42,6 +43,9 @@ export function TaskDetailView() {
 
 	const deadlineLabel = (() => {
 		if (!task.deadline) return '(none)';
+		if (task.status === 'done') {
+			return formatDeadlineShort(task.deadline);
+		}
 		const days = daysUntilDeadline(task.deadline);
 		const formatted = formatDeadlineShort(task.deadline);
 		if (days <= 0) return `${formatted} (overdue)`;

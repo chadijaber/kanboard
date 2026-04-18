@@ -30,7 +30,7 @@ function AppContent() {
 	useEffect(() => {
 		if (!config || deadlineWarningShown.current) return;
 		const hasUrgent = config.tasks.some(
-			t => t.deadline && daysUntilDeadline(t.deadline) < 3,
+			t => t.deadline && daysUntilDeadline(t.deadline) < 3 && t.status !== 'done',
 		);
 		if (hasUrgent) {
 			deadlineWarningShown.current = true;

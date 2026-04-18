@@ -27,6 +27,8 @@ export function TaskCard({
 
 	const deadlineColor = (() => {
 		if (!task.deadline) return undefined;
+		// Done tasks show no warning color
+		if (task.status === 'done') return undefined;
 		const days = daysUntilDeadline(task.deadline);
 		if (days <= 0) return 'red';
 		if (days <= 3) return 'yellow';
@@ -35,6 +37,10 @@ export function TaskCard({
 
 	const deadlineLabel = (() => {
 		if (!task.deadline) return null;
+		// For completed tasks, show the completion date without warning text
+		if (task.status === 'done') {
+			return formatDeadlineShort(task.deadline);
+		}
 		const days = daysUntilDeadline(task.deadline);
 		const formatted = formatDeadlineShort(task.deadline);
 		if (days <= 0) return `Overdue: ${formatted}`;

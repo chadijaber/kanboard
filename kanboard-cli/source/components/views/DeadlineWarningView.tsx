@@ -14,7 +14,7 @@ export function DeadlineWarningView() {
 
 	const urgentTasks =
 		config?.tasks.filter(
-			t => t.deadline && daysUntilDeadline(t.deadline) < 3,
+			t => t.deadline && daysUntilDeadline(t.deadline) < 3 && t.status !== 'done',
 		) ?? [];
 
 	return (
