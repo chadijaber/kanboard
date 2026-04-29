@@ -4,6 +4,8 @@ import type {Task, TaskStatus} from '../../types/index.js';
 import {TASK_STATUS_LABELS} from '../../types/index.js';
 import {TaskCard} from './TaskCard.js';
 
+const MAX_VISIBLE = 3;
+
 interface ColumnProps {
 	status: TaskStatus;
 	tasks: Task[];
@@ -12,6 +14,7 @@ interface ColumnProps {
 	width: number;
 	checklistMode?: boolean;
 	checklistIndex?: number;
+	scrollOffset?: number;
 }
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
@@ -30,9 +33,16 @@ export function Column({
 	width,
 	checklistMode = false,
 	checklistIndex = 0,
+	scrollOffset = 0,
 }: ColumnProps) {
 	const color = STATUS_COLORS[status];
 	const cardWidth = width - 4;
+
+	const offset = isSelected ? scrollOffset : 0;
+	const visibleTasks = tasks.slice(offset, offset + MAX_VISIBLE);
+	const hasAbove = offset > 0;
+	const hasBelow = offset + MAX_VISIBLE < tasks.length;
+	const visibleSelectedIndex = selectedTaskIndex - offset;
 
 	return (
 		<Box
@@ -55,19 +65,27 @@ export function Column({
 				</Text>
 			</Box>
 			<Box flexDirection="column" padding={1} gap={1}>
-				{tasks.length === 0 ? (
+				{hasAbove && <Text dimColor>↑ {offset} more above</Text>}
+				{visibleTasks.length === 0 ? (
 					<Text dimColor>No tasks</Text>
 				) : (
-					tasks.map((task, index) => (
+					visibleTasks.map((task, index) => (
 						<TaskCard
 							key={task.id}
 							task={task}
-							isSelected={isSelected && index === selectedTaskIndex}
+							isSelected={isSelected && index === visibleSelectedIndex}
 							width={cardWidth}
-							checklistMode={isSelected && index === selectedTaskIndex && checklistMode}
+							checklistMode={
+								isSelected && index === visibleSelectedIndex && checklistMode
+							}
 							checklistIndex={checklistIndex}
 						/>
 					))
+				)}
+				{hasBelow && (
+					<Text dimColor>
+						↓ {tasks.length - offset - MAX_VISIBLE} more below
+					</Text>
 				)}
 			</Box>
 		</Box>

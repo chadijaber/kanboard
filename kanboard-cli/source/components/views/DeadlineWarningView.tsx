@@ -14,7 +14,8 @@ export function DeadlineWarningView() {
 
 	const urgentTasks =
 		config?.tasks.filter(
-			t => t.deadline && daysUntilDeadline(t.deadline) < 3 && t.status !== 'done',
+			t =>
+				t.deadline && daysUntilDeadline(t.deadline) < 3 && t.status !== 'done',
 		) ?? [];
 
 	return (
@@ -36,8 +37,8 @@ export function DeadlineWarningView() {
 						days <= 0
 							? `OVERDUE (${formatted})`
 							: days === 1
-								? `tomorrow (${formatted})`
-								: `${days} days (${formatted})`;
+							? `tomorrow (${formatted})`
+							: `${days} days (${formatted})`;
 					return (
 						<Box key={task.id}>
 							<Text color="red">• </Text>

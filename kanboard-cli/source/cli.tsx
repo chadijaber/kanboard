@@ -22,6 +22,17 @@ import {docListCommand} from './commands/doc/list.js';
 import {docReadCommand} from './commands/doc/read.js';
 import {docUpdateCommand} from './commands/doc/update.js';
 import {docDeleteCommand} from './commands/doc/delete.js';
+import {sprintAddCommand} from './commands/sprint/add.js';
+import {sprintListCommand} from './commands/sprint/list.js';
+import {sprintShowCommand} from './commands/sprint/show.js';
+import {sprintUpdateCommand} from './commands/sprint/update.js';
+import {sprintDeleteCommand} from './commands/sprint/delete.js';
+import {sprintActivateCommand} from './commands/sprint/activate.js';
+import {
+	sprintMilestoneAddCommand,
+	sprintMilestoneToggleCommand,
+	sprintMilestoneRemoveCommand,
+} from './commands/sprint/milestone.js';
 
 const cli = meow(
 	`
@@ -29,6 +40,7 @@ const cli = meow(
 	  $ kanboard-cli                    Launch interactive TUI
 	  $ kanboard-cli board              Jump to board view
 	  $ kanboard-cli docs               Jump to docs view
+	  $ kanboard-cli sprints            Jump to sprints view
 
 	Project Commands
 	  $ kanboard-cli init               Initialize a new project
@@ -39,7 +51,7 @@ const cli = meow(
 	  $ kanboard-cli task add           Create a new task
 	  $ kanboard-cli task list          List all tasks
 	  $ kanboard-cli task show <id>     Show task details
-	  $ kanboard-cli task update <id>   Update a task
+	  $ kanboard-cli task update <id>   Update a task (use --sprint to assign)
 	  $ kanboard-cli task move <id> <status>  Move task to status
 	  $ kanboard-cli task delete <id>   Delete a task
 
@@ -47,6 +59,19 @@ const cli = meow(
 	  $ kanboard-cli task checklist <id> add     Add a checklist item (--text)
 	  $ kanboard-cli task checklist <id> toggle  Toggle a checklist item (--index)
 	  $ kanboard-cli task checklist <id> remove  Remove a checklist item (--index)
+
+	Sprint Commands
+	  $ kanboard-cli sprint add         Create a new sprint
+	  $ kanboard-cli sprint list        List all sprints
+	  $ kanboard-cli sprint show <id>   Show sprint details + progress
+	  $ kanboard-cli sprint update <id> Update a sprint
+	  $ kanboard-cli sprint activate <id>  Set the active sprint
+	  $ kanboard-cli sprint delete <id> Delete a sprint (tasks → backlog)
+
+	Sprint Milestone Commands
+	  $ kanboard-cli sprint milestone add <id>     (--text)
+	  $ kanboard-cli sprint milestone toggle <id>  (--index)
+	  $ kanboard-cli sprint milestone remove <id>  (--index)
 
 	Doc Commands
 	  $ kanboard-cli doc add            Create a new doc
@@ -56,14 +81,17 @@ const cli = meow(
 	  $ kanboard-cli doc delete <path>  Delete a doc
 
 	Options
-	  --name, -n         Name (for init, task add, doc add)
+	  --name, -n         Name (for init, task add, doc add, sprint add)
 	  --description, -d  Description
 	  --owner, -o        Task owner
-	  --status, -s       Task status (backlog, todo, in_progress, review, done)
+	  --status, -s       Task or sprint status
 	  --requirements, -r Requirements (comma-separated)
 	  --deadline, -D     Task deadline (YYYY-MM-DD)
-	  --text, -T         Checklist item text
-	  --index            Checklist item index (0-based)
+	  --sprint, -S       Sprint ID (for task add/update)
+	  --start            Sprint start date (YYYY-MM-DD)
+	  --end              Sprint end date (YYYY-MM-DD)
+	  --text, -T         Checklist/milestone text
+	  --index            Checklist/milestone index (0-based)
 	  --github-url, -g   GitHub repository URL
 	  --path, -p         Doc path
 	  --title, -t        Doc title
@@ -81,6 +109,9 @@ const cli = meow(
 			status: {type: 'string', shortFlag: 's'},
 			requirements: {type: 'string', shortFlag: 'r'},
 			deadline: {type: 'string', shortFlag: 'D'},
+			sprint: {type: 'string', shortFlag: 'S'},
+			start: {type: 'string'},
+			end: {type: 'string'},
 			text: {type: 'string', shortFlag: 'T'},
 			index: {type: 'string'},
 			githubUrl: {type: 'string', shortFlag: 'g'},
@@ -125,6 +156,7 @@ function runCommand(): React.ReactNode | null {
 						status: cli.flags.status,
 						requirements: cli.flags.requirements?.split(',').map(r => r.trim()),
 						deadline: cli.flags.deadline,
+						sprint: cli.flags.sprint,
 					});
 				case 'list':
 					return taskListCommand({
@@ -143,6 +175,7 @@ function runCommand(): React.ReactNode | null {
 						status: cli.flags.status,
 						requirements: cli.flags.requirements?.split(',').map(r => r.trim()),
 						deadline: cli.flags.deadline,
+						sprint: cli.flags.sprint,
 					});
 				case 'move':
 					return taskMoveCommand({id: args[0], status: args[1]});
@@ -150,19 +183,91 @@ function runCommand(): React.ReactNode | null {
 					return taskDeleteCommand({id: args[0], force: cli.flags.force});
 				case 'checklist': {
 					const [checklistAction, checklistTaskId] = args;
-					const indexFlag = cli.flags.index !== undefined ? Number(cli.flags.index) : undefined;
+					const indexFlag =
+						cli.flags.index !== undefined ? Number(cli.flags.index) : undefined;
 					switch (checklistAction) {
 						case 'add':
-							return taskChecklistAddCommand({id: checklistTaskId, text: cli.flags.text});
+							return taskChecklistAddCommand({
+								id: checklistTaskId,
+								text: cli.flags.text,
+							});
 						case 'toggle':
-							return taskChecklistToggleCommand({id: checklistTaskId, index: indexFlag});
+							return taskChecklistToggleCommand({
+								id: checklistTaskId,
+								index: indexFlag,
+							});
 						case 'remove':
-							return taskChecklistRemoveCommand({id: checklistTaskId, index: indexFlag});
+							return taskChecklistRemoveCommand({
+								id: checklistTaskId,
+								index: indexFlag,
+							});
 						default:
 							return React.createElement(
 								Text,
 								{color: 'red'},
 								'Unknown checklist action. Use: add, toggle, remove',
+							);
+					}
+				}
+				default:
+					return null;
+			}
+
+		case 'sprint':
+			switch (subcommand) {
+				case 'add':
+					return sprintAddCommand({
+						name: cli.flags.name,
+						description: cli.flags.description,
+						start: cli.flags.start,
+						end: cli.flags.end,
+						status: cli.flags.status,
+					});
+				case 'list':
+					return sprintListCommand({json: cli.flags.json});
+				case 'show':
+					return sprintShowCommand({id: args[0]});
+				case 'update':
+					return sprintUpdateCommand({
+						id: args[0],
+						name: cli.flags.name,
+						description: cli.flags.description,
+						start: cli.flags.start,
+						end: cli.flags.end,
+						status: cli.flags.status,
+					});
+				case 'delete':
+					return sprintDeleteCommand({
+						id: args[0],
+						force: cli.flags.force,
+					});
+				case 'activate':
+					return sprintActivateCommand({id: args[0]});
+				case 'milestone': {
+					const [milestoneAction, milestoneSprintId] = args;
+					const milestoneIndex =
+						cli.flags.index !== undefined ? Number(cli.flags.index) : undefined;
+					switch (milestoneAction) {
+						case 'add':
+							return sprintMilestoneAddCommand({
+								id: milestoneSprintId,
+								text: cli.flags.text,
+							});
+						case 'toggle':
+							return sprintMilestoneToggleCommand({
+								id: milestoneSprintId,
+								index: milestoneIndex,
+							});
+						case 'remove':
+							return sprintMilestoneRemoveCommand({
+								id: milestoneSprintId,
+								index: milestoneIndex,
+							});
+						default:
+							return React.createElement(
+								Text,
+								{color: 'red'},
+								'Unknown milestone action. Use: add, toggle, remove',
 							);
 					}
 				}
@@ -196,6 +301,7 @@ function runCommand(): React.ReactNode | null {
 
 		case 'board':
 		case 'docs':
+		case 'sprints':
 		case undefined:
 			return null; // Will launch TUI
 
@@ -211,6 +317,7 @@ if (commandResult !== null) {
 	render(commandResult);
 } else {
 	// Launch TUI
-	const initialView = command === 'docs' ? 'docs' : 'board';
+	const initialView =
+		command === 'docs' ? 'docs' : command === 'sprints' ? 'sprints' : 'board';
 	render(<App initialView={initialView} />);
 }

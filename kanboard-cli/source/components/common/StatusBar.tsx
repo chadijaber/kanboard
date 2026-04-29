@@ -19,7 +19,11 @@ export function StatusBar() {
 			{key: 'y', label: 'Confirm'},
 			{key: 'n/Esc', label: 'Cancel'},
 		];
-	} else if (activeModal === 'task-form' || activeModal === 'doc-form') {
+	} else if (
+		activeModal === 'task-form' ||
+		activeModal === 'doc-form' ||
+		activeModal === 'sprint-form'
+	) {
 		bindings = [
 			{key: 'Tab', label: 'Next field'},
 			{key: 'Enter', label: 'Submit'},
@@ -37,6 +41,30 @@ export function StatusBar() {
 			{key: 'Enter', label: 'Run'},
 			{key: 'Esc', label: 'Cancel'},
 		];
+	} else if (activeModal === 'sprint-switcher') {
+		bindings = [
+			{key: 'j/k', label: 'Select'},
+			{key: 'Enter', label: 'Switch'},
+			{key: 'Esc', label: 'Cancel'},
+		];
+	} else if (currentView === 'sprints') {
+		bindings = [
+			{key: 'j/k', label: 'Select'},
+			{key: 'Enter', label: 'Detail'},
+			{key: 'n', label: 'New'},
+			{key: 'e', label: 'Edit'},
+			{key: 'a', label: 'Activate'},
+			{key: 'd', label: 'Delete'},
+			{key: 'Tab', label: 'Board'},
+			{key: 'q', label: 'Quit'},
+		];
+	} else if (currentView === 'sprint-detail') {
+		bindings = [
+			{key: 'j/k', label: 'Milestone'},
+			{key: 'Space', label: 'Toggle'},
+			{key: 'e', label: 'Edit'},
+			{key: 'Esc', label: 'Back'},
+		];
 	} else if (currentView === 'board') {
 		bindings = [
 			{key: 'h/l', label: 'Columns'},
@@ -45,8 +73,9 @@ export function StatusBar() {
 			{key: 'n', label: 'New'},
 			{key: 'm', label: 'Move'},
 			{key: 'd', label: 'Delete'},
+			{key: 'S', label: 'Sprint'},
 			{key: ':', label: 'Command'},
-			{key: 'Tab', label: 'Docs'},
+			{key: 'Tab', label: 'Next view'},
 			{key: '?', label: 'Help'},
 			{key: 'q', label: 'Quit'},
 		];

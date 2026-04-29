@@ -51,7 +51,13 @@ export function taskShowCommand(options: TaskShowOptions): React.ReactNode {
 			  )
 			: React.createElement(Text, {dimColor: true}, '  (none)'),
 		React.createElement(Text, null, ''),
-		React.createElement(Text, {bold: true}, `Checklist (${checklist.filter(i => i.completed).length}/${checklist.length}):`),
+		React.createElement(
+			Text,
+			{bold: true},
+			`Checklist (${checklist.filter(i => i.completed).length}/${
+				checklist.length
+			}):`,
+		),
 		checklist.length > 0
 			? React.createElement(
 					Box,

@@ -47,6 +47,37 @@ export function readConfig(configPath?: string): KanboardConfig | null {
 			if (!('deadline' in task)) {
 				(task as any).deadline = null;
 			}
+			if (!('sprintId' in task)) {
+				(task as any).sprintId = null;
+			}
+			// Repair invariant: backlog tasks must have null sprintId,
+			// non-backlog tasks must have a sprintId — fall back to backlog if not.
+			if (task.status === 'backlog' && task.sprintId !== null) {
+				task.sprintId = null;
+			} else if (task.status !== 'backlog' && !task.sprintId) {
+				task.status = 'backlog' as any;
+				task.sprintId = null;
+			}
+		}
+		// Migration: add sprints fields if missing
+		if (!Array.isArray(config.sprints)) {
+			config.sprints = [];
+		}
+		if (!('activeSprintId' in config)) {
+			(config as any).activeSprintId = null;
+		}
+		// Repair: clear activeSprintId if it points to a deleted sprint
+		if (
+			config.activeSprintId &&
+			!config.sprints.some(s => s.id === config.activeSprintId)
+		) {
+			config.activeSprintId = null;
+		}
+		// Ensure each sprint has a milestones array (forward compat)
+		for (const sprint of config.sprints) {
+			if (!Array.isArray(sprint.milestones)) {
+				sprint.milestones = [];
+			}
 		}
 		return config;
 	} catch {
@@ -74,6 +105,8 @@ export function createDefaultConfig(project: Partial<Project>): KanboardConfig {
 		members: [],
 		tasks: [],
 		docs: [],
+		sprints: [],
+		activeSprintId: null,
 	};
 }
 

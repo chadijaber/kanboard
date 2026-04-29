@@ -12,6 +12,7 @@ interface TaskUpdateOptions {
 	status?: string;
 	requirements?: string[];
 	deadline?: string;
+	sprint?: string;
 }
 
 function parseStatus(status?: string): TaskStatus | undefined {
@@ -43,13 +44,14 @@ export function taskUpdateCommand(options: TaskUpdateOptions): React.ReactNode {
 		options.owner !== undefined ||
 		status !== undefined ||
 		options.requirements !== undefined ||
-		options.deadline !== undefined;
+		options.deadline !== undefined ||
+		options.sprint !== undefined;
 
 	if (!hasUpdates) {
 		return React.createElement(
 			Text,
 			{color: 'yellow'},
-			'No updates provided. Use --name, --description, --owner, --status, or --requirements',
+			'No updates provided. Use --name, --description, --owner, --status, --sprint, or --requirements',
 		);
 	}
 
@@ -60,7 +62,10 @@ export function taskUpdateCommand(options: TaskUpdateOptions): React.ReactNode {
 			owner: options.owner,
 			status,
 			requirements: options.requirements,
-			deadline: options.deadline !== undefined ? (options.deadline || null) : undefined,
+			deadline:
+				options.deadline !== undefined ? options.deadline || null : undefined,
+			sprintId:
+				options.sprint !== undefined ? options.sprint || null : undefined,
 		});
 
 		return React.createElement(

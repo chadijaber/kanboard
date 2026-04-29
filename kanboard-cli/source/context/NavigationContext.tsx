@@ -16,7 +16,9 @@ export type ModalType =
 	| 'help'
 	| 'confirm-delete'
 	| 'command-input'
-	| 'deadline-warning';
+	| 'deadline-warning'
+	| 'sprint-form'
+	| 'sprint-switcher';
 
 interface NavigationContextValue {
 	// Board navigation
@@ -48,6 +50,12 @@ interface NavigationContextValue {
 	setEditingTaskId: (id: string | null) => void;
 	editingDocPath: string | null;
 	setEditingDocPath: (path: string | null) => void;
+	editingSprintId: string | null;
+	setEditingSprintId: (id: string | null) => void;
+
+	// Sprints navigation
+	selectedSprintIndex: number;
+	setSelectedSprintIndex: (idx: number) => void;
 
 	// Confirm dialog
 	confirmAction: (() => void) | null;
@@ -72,6 +80,8 @@ export function NavigationProvider({children}: NavigationProviderProps) {
 	const [selectedDocIndex, setSelectedDocIndex] = useState(0);
 	const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 	const [editingDocPath, setEditingDocPath] = useState<string | null>(null);
+	const [editingSprintId, setEditingSprintId] = useState<string | null>(null);
+	const [selectedSprintIndex, setSelectedSprintIndex] = useState(0);
 	const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
 	const [confirmMessage, setConfirmMessage] = useState('');
 
@@ -134,6 +144,10 @@ export function NavigationProvider({children}: NavigationProviderProps) {
 		setEditingTaskId,
 		editingDocPath,
 		setEditingDocPath,
+		editingSprintId,
+		setEditingSprintId,
+		selectedSprintIndex,
+		setSelectedSprintIndex,
 		confirmAction,
 		setConfirmAction,
 		confirmMessage,

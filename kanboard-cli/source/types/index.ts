@@ -37,9 +37,30 @@ export interface Task {
 	checklist: ChecklistItem[];
 	deadline: string | null;
 	status: TaskStatus;
+	sprintId: string | null;
 	createdAt: string;
 	updatedAt: string;
 	order: number;
+}
+
+export type SprintStatus = 'planning' | 'active' | 'completed';
+
+export const SPRINT_STATUS_LABELS: Record<SprintStatus, string> = {
+	planning: 'Planning',
+	active: 'Active',
+	completed: 'Completed',
+};
+
+export interface Sprint {
+	id: string;
+	name: string;
+	description: string;
+	startDate: string | null;
+	endDate: string | null;
+	milestones: ChecklistItem[];
+	status: SprintStatus;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface Doc {
@@ -65,9 +86,11 @@ export interface KanboardConfig {
 	members: string[];
 	tasks: Task[];
 	docs: Doc[];
+	sprints: Sprint[];
+	activeSprintId: string | null;
 }
 
-export type ViewType = 'board' | 'docs';
+export type ViewType = 'board' | 'docs' | 'sprints' | 'sprint-detail';
 
 export interface DocTreeNode {
 	id: string;

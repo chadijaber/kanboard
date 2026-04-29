@@ -7,12 +7,28 @@ import {
 	TASK_STATUS_ORDER,
 	TASK_STATUS_LABELS,
 	type ChecklistItem,
+	type Sprint,
 } from '../../types/index.js';
 import {generateId} from '../../utils/id.js';
 
-type FormField = 'name' | 'description' | 'owner' | 'deadline' | 'checklist' | 'status';
+type FormField =
+	| 'name'
+	| 'description'
+	| 'owner'
+	| 'deadline'
+	| 'checklist'
+	| 'sprint'
+	| 'status';
 
-const FIELDS: FormField[] = ['name', 'description', 'owner', 'deadline', 'checklist', 'status'];
+const FIELDS: FormField[] = [
+	'name',
+	'description',
+	'owner',
+	'deadline',
+	'checklist',
+	'sprint',
+	'status',
+];
 
 export function TaskFormView() {
 	const {config, addTask, updateTask, addMember} = useKanboard();
@@ -49,6 +65,17 @@ export function TaskFormView() {
 	const [checklistItemIndex, setChecklistItemIndex] = useState(0);
 	const [addingChecklistItem, setAddingChecklistItem] = useState(false);
 	const newChecklistItemRef = useRef('');
+
+	// Sprint selector state
+	const sprints: Sprint[] = config?.sprints ?? [];
+	const [sprintListIndex, setSprintListIndex] = useState(() => {
+		if (!existingTask?.sprintId) return 0;
+		const idx = sprints.findIndex(s => s.id === existingTask.sprintId);
+		return idx >= 0 ? idx + 1 : 0;
+	});
+	const [selectedSprintId, setSelectedSprintId] = useState<string | null>(
+		existingTask?.sprintId ?? null,
+	);
 
 	const moveToNextField = () => {
 		const currentIndex = FIELDS.indexOf(activeField);
@@ -95,18 +122,19 @@ export function TaskFormView() {
 					deadline: deadlineValue,
 					checklist,
 					status,
+					sprintId: selectedSprintId,
 				});
 			} else {
-				const task = addTask(
+				addTask(
 					nameRef.current.trim(),
 					descriptionRef.current.trim(),
 					status,
 					ownerRef.current.trim() || null,
 					deadlineValue,
+					checklist,
+					[],
+					selectedSprintId,
 				);
-				if (checklist.length > 0) {
-					updateTask(task.id, {checklist});
-				}
 			}
 			setActiveModal('none');
 		} catch (err) {
@@ -208,7 +236,10 @@ export function TaskFormView() {
 					return;
 				}
 				if (key.backspace || key.delete) {
-					newChecklistItemRef.current = newChecklistItemRef.current.slice(0, -1);
+					newChecklistItemRef.current = newChecklistItemRef.current.slice(
+						0,
+						-1,
+					);
 					return;
 				}
 				if (input && !key.ctrl && !key.meta && !key.tab) {
@@ -244,6 +275,29 @@ export function TaskFormView() {
 			}
 			if ((input === 'k' || key.upArrow) && checklist.length > 0) {
 				setChecklistItemIndex(i => Math.max(i - 1, 0));
+				return;
+			}
+		}
+
+		if (activeField === 'sprint') {
+			// Sprint list: 0 = "None", 1..n = sprints
+			const listCount = sprints.length + 1;
+			if (input === 'j' || key.downArrow) {
+				setSprintListIndex(i => Math.min(i + 1, listCount - 1));
+				return;
+			}
+			if (input === 'k' || key.upArrow) {
+				setSprintListIndex(i => Math.max(i - 1, 0));
+				return;
+			}
+			if (key.return) {
+				if (sprintListIndex === 0) {
+					setSelectedSprintId(null);
+				} else {
+					const sprint = sprints[sprintListIndex - 1];
+					if (sprint) setSelectedSprintId(sprint.id);
+				}
+				moveToNextField();
 				return;
 			}
 		}
@@ -382,7 +436,9 @@ export function TaskFormView() {
 					<Text dimColor={checklist.length === 0}>
 						{checklist.length === 0
 							? '(none)'
-							: `${checklist.filter(i => i.completed).length}/${checklist.length} done`}
+							: `${checklist.filter(i => i.completed).length}/${
+									checklist.length
+							  } done`}
 					</Text>
 				</Box>
 			);
@@ -404,8 +460,8 @@ export function TaskFormView() {
 							key={item.id}
 							color={i === checklistItemIndex ? 'cyan' : undefined}
 						>
-							{i === checklistItemIndex ? '>' : ' '} {item.completed ? '[x]' : '[ ]'}{' '}
-							{item.text}
+							{i === checklistItemIndex ? '>' : ' '}{' '}
+							{item.completed ? '[x]' : '[ ]'} {item.text}
 						</Text>
 					))}
 					{addingChecklistItem && (
@@ -438,6 +494,46 @@ export function TaskFormView() {
 		);
 	};
 
+	const renderSprintField = () => {
+		const isActive = activeField === 'sprint';
+		const currentSprint = sprints.find(s => s.id === selectedSprintId);
+		const displayName = currentSprint ? currentSprint.name : '(none — backlog)';
+
+		if (!isActive) {
+			return (
+				<Box key="sprint">
+					<Box width={13}>
+						<Text>Sprint:</Text>
+					</Box>
+					<Text dimColor={!currentSprint}>{displayName}</Text>
+				</Box>
+			);
+		}
+
+		const listItems = ['None (backlog)', ...sprints.map(s => s.name)];
+		return (
+			<Box key="sprint" flexDirection="column">
+				<Box>
+					<Box width={13}>
+						<Text color="cyan">Sprint:</Text>
+					</Box>
+					<Text dimColor={!currentSprint}>{displayName}</Text>
+				</Box>
+				<Box flexDirection="column" marginLeft={13}>
+					{listItems.map((item, i) => (
+						<Box key={i}>
+							<Text color={i === sprintListIndex ? 'cyan' : undefined}>
+								{i === sprintListIndex ? '> ' : '  '}
+								{item}
+							</Text>
+						</Box>
+					))}
+					<Text dimColor>j/k: navigate | Enter: select</Text>
+				</Box>
+			</Box>
+		);
+	};
+
 	return (
 		<Box
 			flexDirection="column"
@@ -460,6 +556,7 @@ export function TaskFormView() {
 				{renderOwnerField()}
 				{renderTextField('deadline', 'Deadline', deadlineRef)}
 				{renderChecklistField()}
+				{renderSprintField()}
 
 				<Box>
 					<Box width={13}>

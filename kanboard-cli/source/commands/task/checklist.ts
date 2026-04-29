@@ -7,7 +7,8 @@ import {shortId} from '../../utils/id.js';
 function getTaskFromConfig(id?: string) {
 	if (!id) return {error: 'Task ID is required.'};
 	const config = readConfig();
-	if (!config) return {error: 'No kanboard project found. Run "kanboard-cli init" first.'};
+	if (!config)
+		return {error: 'No kanboard project found. Run "kanboard-cli init" first.'};
 	const task = config.tasks.find(t => t.id === id || t.id.startsWith(id));
 	if (!task) return {error: `Task not found: ${id}`};
 	return {config, task};
@@ -18,9 +19,15 @@ interface ChecklistAddOptions {
 	text?: string;
 }
 
-export function taskChecklistAddCommand(options: ChecklistAddOptions): React.ReactNode {
+export function taskChecklistAddCommand(
+	options: ChecklistAddOptions,
+): React.ReactNode {
 	if (!options.text) {
-		return React.createElement(Text, {color: 'red'}, 'Item text is required. Use --text or -T');
+		return React.createElement(
+			Text,
+			{color: 'red'},
+			'Item text is required. Use --text or -T',
+		);
 	}
 
 	const result = getTaskFromConfig(options.id);
@@ -29,7 +36,11 @@ export function taskChecklistAddCommand(options: ChecklistAddOptions): React.Rea
 	}
 
 	const {config, task} = result;
-	const newItem = {id: generateId(), text: options.text.trim(), completed: false};
+	const newItem = {
+		id: generateId(),
+		text: options.text.trim(),
+		completed: false,
+	};
 	task.checklist = [...(task.checklist ?? []), newItem];
 	task.updatedAt = new Date().toISOString();
 	writeConfig(config);
@@ -37,7 +48,11 @@ export function taskChecklistAddCommand(options: ChecklistAddOptions): React.Rea
 	return React.createElement(
 		Box,
 		{flexDirection: 'column'},
-		React.createElement(Text, {color: 'green'}, `Checklist item added to: ${task.name}`),
+		React.createElement(
+			Text,
+			{color: 'green'},
+			`Checklist item added to: ${task.name}`,
+		),
 		React.createElement(Text, {dimColor: true}, `Item: ${newItem.text}`),
 		React.createElement(Text, {dimColor: true}, `Task ID: ${shortId(task.id)}`),
 	);
@@ -48,9 +63,15 @@ interface ChecklistToggleOptions {
 	index?: number;
 }
 
-export function taskChecklistToggleCommand(options: ChecklistToggleOptions): React.ReactNode {
+export function taskChecklistToggleCommand(
+	options: ChecklistToggleOptions,
+): React.ReactNode {
 	if (options.index === undefined || isNaN(options.index)) {
-		return React.createElement(Text, {color: 'red'}, 'Item index is required. Use --index');
+		return React.createElement(
+			Text,
+			{color: 'red'},
+			'Item index is required. Use --index',
+		);
 	}
 
 	const result = getTaskFromConfig(options.id);
@@ -79,7 +100,9 @@ export function taskChecklistToggleCommand(options: ChecklistToggleOptions): Rea
 		React.createElement(
 			Text,
 			{color: 'green'},
-			`Checklist item ${item.completed ? 'checked' : 'unchecked'}: ${item.text}`,
+			`Checklist item ${item.completed ? 'checked' : 'unchecked'}: ${
+				item.text
+			}`,
 		),
 		React.createElement(Text, {dimColor: true}, `Task ID: ${shortId(task.id)}`),
 	);
@@ -90,9 +113,15 @@ interface ChecklistRemoveOptions {
 	index?: number;
 }
 
-export function taskChecklistRemoveCommand(options: ChecklistRemoveOptions): React.ReactNode {
+export function taskChecklistRemoveCommand(
+	options: ChecklistRemoveOptions,
+): React.ReactNode {
 	if (options.index === undefined || isNaN(options.index)) {
-		return React.createElement(Text, {color: 'red'}, 'Item index is required. Use --index');
+		return React.createElement(
+			Text,
+			{color: 'red'},
+			'Item index is required. Use --index',
+		);
 	}
 
 	const result = getTaskFromConfig(options.id);
@@ -118,7 +147,11 @@ export function taskChecklistRemoveCommand(options: ChecklistRemoveOptions): Rea
 	return React.createElement(
 		Box,
 		{flexDirection: 'column'},
-		React.createElement(Text, {color: 'green'}, `Checklist item removed: ${removed.text}`),
+		React.createElement(
+			Text,
+			{color: 'green'},
+			`Checklist item removed: ${removed.text}`,
+		),
 		React.createElement(Text, {dimColor: true}, `Task ID: ${shortId(task.id)}`),
 	);
 }

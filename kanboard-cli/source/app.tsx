@@ -17,6 +17,10 @@ import {DocViewView} from './components/views/DocViewView.js';
 import {DocFormView} from './components/views/DocFormView.js';
 import {CommandInputView} from './components/views/CommandInputView.js';
 import {DeadlineWarningView} from './components/views/DeadlineWarningView.js';
+import {SprintsView} from './components/views/SprintsView.js';
+import {SprintDetailView} from './components/views/SprintDetailView.js';
+import {SprintFormView} from './components/views/SprintFormView.js';
+import {SprintSwitcherView} from './components/views/SprintSwitcherView.js';
 import {daysUntilDeadline} from './utils/date.js';
 import type {ViewType} from './types/index.js';
 
@@ -30,7 +34,8 @@ function AppContent() {
 	useEffect(() => {
 		if (!config || deadlineWarningShown.current) return;
 		const hasUrgent = config.tasks.some(
-			t => t.deadline && daysUntilDeadline(t.deadline) < 3 && t.status !== 'done',
+			t =>
+				t.deadline && daysUntilDeadline(t.deadline) < 3 && t.status !== 'done',
 		);
 		if (hasUrgent) {
 			deadlineWarningShown.current = true;
@@ -57,7 +62,10 @@ function AppContent() {
 		}
 
 		if (key.tab) {
-			setCurrentView(currentView === 'board' ? 'docs' : 'board');
+			const order: ViewType[] = ['board', 'docs', 'sprints'];
+			const i = order.indexOf(currentView as ViewType);
+			const next = order[(i + 1) % order.length] ?? 'board';
+			setCurrentView(next);
 		}
 	});
 
@@ -96,6 +104,10 @@ function AppContent() {
 				return <CommandInputView />;
 			case 'deadline-warning':
 				return <DeadlineWarningView />;
+			case 'sprint-form':
+				return <SprintFormView />;
+			case 'sprint-switcher':
+				return <SprintSwitcherView />;
 			default:
 				return null;
 		}
@@ -104,6 +116,12 @@ function AppContent() {
 	const renderView = () => {
 		if (currentView === 'board') {
 			return <BoardView width={width} />;
+		}
+		if (currentView === 'sprints') {
+			return <SprintsView />;
+		}
+		if (currentView === 'sprint-detail') {
+			return <SprintDetailView />;
 		}
 
 		return <DocsView />;
@@ -128,7 +146,12 @@ interface AppProps {
 }
 
 export default function App({initialView = 'board'}: AppProps) {
-	const view = (initialView === 'docs' ? 'docs' : 'board') as ViewType;
+	const view: ViewType =
+		initialView === 'docs'
+			? 'docs'
+			: initialView === 'sprints'
+			? 'sprints'
+			: 'board';
 
 	return (
 		<KanboardProvider initialView={view}>

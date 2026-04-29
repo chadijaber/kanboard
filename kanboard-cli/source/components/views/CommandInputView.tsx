@@ -2,7 +2,11 @@ import React, {useState, useRef, useEffect} from 'react';
 import {Box, Text, useInput} from 'ink';
 import {useKanboard} from '../../context/KanboardContext.js';
 import {useNavigation} from '../../context/NavigationContext.js';
-import {TaskStatus, TASK_STATUS_ORDER, TASK_STATUS_LABELS} from '../../types/index.js';
+import {
+	TaskStatus,
+	TASK_STATUS_ORDER,
+	TASK_STATUS_LABELS,
+} from '../../types/index.js';
 import {parseCommand} from '../../utils/commandParser.js';
 import {shortId} from '../../utils/id.js';
 
@@ -84,13 +88,16 @@ export function CommandInputView() {
 					const statusFilter = flags['status'] ?? flags['s'];
 					const ownerFilter = flags['owner'] ?? flags['o'];
 					let tasks = [...config.tasks];
-					if (statusFilter) tasks = tasks.filter(t => t.status === statusFilter);
+					if (statusFilter)
+						tasks = tasks.filter(t => t.status === statusFilter);
 					if (ownerFilter) tasks = tasks.filter(t => t.owner === ownerFilter);
 					if (tasks.length === 0)
 						return {success: true, message: 'No tasks found', lines: []};
 					const lines = tasks.map(
 						t =>
-							`  [${t.status}] ${t.name}${t.owner ? ' @' + t.owner : ''} (${shortId(t.id)})`,
+							`  [${t.status}] ${t.name}${
+								t.owner ? ' @' + t.owner : ''
+							} (${shortId(t.id)})`,
 					);
 					return {
 						success: true,
@@ -101,13 +108,11 @@ export function CommandInputView() {
 
 				case 'show': {
 					const id = args[0];
-					if (!id)
-						return {success: false, message: 'task show requires <id>'};
+					if (!id) return {success: false, message: 'task show requires <id>'};
 					const task = config.tasks.find(
 						t => t.id.startsWith(id) || shortId(t.id) === id,
 					);
-					if (!task)
-						return {success: false, message: `Task not found: ${id}`};
+					if (!task) return {success: false, message: `Task not found: ${id}`};
 					return {
 						success: true,
 						message: task.name,
@@ -131,13 +136,14 @@ export function CommandInputView() {
 					const task = config.tasks.find(
 						t => t.id.startsWith(id) || shortId(t.id) === id,
 					);
-					if (!task)
-						return {success: false, message: `Task not found: ${id}`};
+					if (!task) return {success: false, message: `Task not found: ${id}`};
 					const validSt = TASK_STATUS_ORDER.find(s => s === newStatus);
 					if (!validSt)
 						return {
 							success: false,
-							message: `Invalid status: ${newStatus}. Valid: ${TASK_STATUS_ORDER.join(', ')}`,
+							message: `Invalid status: ${newStatus}. Valid: ${TASK_STATUS_ORDER.join(
+								', ',
+							)}`,
 						};
 					moveTask(task.id, validSt);
 					return {
@@ -153,8 +159,7 @@ export function CommandInputView() {
 					const task = config.tasks.find(
 						t => t.id.startsWith(id) || shortId(t.id) === id,
 					);
-					if (!task)
-						return {success: false, message: `Task not found: ${id}`};
+					if (!task) return {success: false, message: `Task not found: ${id}`};
 					deleteTask(task.id);
 					return {success: true, message: `Deleted "${task.name}"`};
 				}
@@ -166,8 +171,7 @@ export function CommandInputView() {
 					const task = config.tasks.find(
 						t => t.id.startsWith(id) || shortId(t.id) === id,
 					);
-					if (!task)
-						return {success: false, message: `Task not found: ${id}`};
+					if (!task) return {success: false, message: `Task not found: ${id}`};
 					const updates: Parameters<typeof updateTask>[1] = {};
 					if (flags['name'] ?? flags['n'])
 						updates.name = String(flags['name'] ?? flags['n']);
@@ -187,7 +191,9 @@ export function CommandInputView() {
 				default:
 					return {
 						success: false,
-						message: `Unknown task subcommand: ${subcommand ?? '(none)'}. Try: add, list, show, move, delete, update`,
+						message: `Unknown task subcommand: ${
+							subcommand ?? '(none)'
+						}. Try: add, list, show, move, delete, update`,
 					};
 			}
 		}
@@ -261,13 +267,15 @@ export function CommandInputView() {
 							{line}
 						</Text>
 					))}
-					<Text dimColor>  (closing in 2s...)</Text>
+					<Text dimColor> (closing in 2s...)</Text>
 				</Box>
 			)}
 
 			{!submitted && (
 				<Text dimColor>
-					{'  Enter: run | Esc: cancel | e.g. task add --name "My task" --status todo'}
+					{
+						'  Enter: run | Esc: cancel | e.g. task add --name "My task" --status todo'
+					}
 				</Text>
 			)}
 		</Box>

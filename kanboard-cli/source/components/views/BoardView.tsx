@@ -8,14 +8,17 @@ import {
 	type Task,
 } from '../../types/index.js';
 import {Column} from '../board/Column.js';
-import {getTasksByStatus} from '../../utils/tasks.js';
+import {getTasksByStatusForSprint} from '../../utils/tasks.js';
+import {getActiveSprint} from '../../utils/sprints.js';
+import {formatDeadlineShort, daysUntilDeadline} from '../../utils/date.js';
 
 interface BoardViewProps {
 	width: number;
 }
 
 export function BoardView({width}: BoardViewProps) {
-	const {config, moveTask, deleteTask, setSelectedTaskId, updateTask} = useKanboard();
+	const {config, moveTask, deleteTask, setSelectedTaskId, updateTask} =
+		useKanboard();
 	const {
 		selectedColumn,
 		selectedRow,
@@ -37,10 +40,17 @@ export function BoardView({width}: BoardViewProps) {
 
 	const tasksByStatus = useMemo(() => {
 		if (!config) return new Map<TaskStatus, Task[]>();
-		return getTasksByStatus(config);
+		return getTasksByStatusForSprint(config, config.activeSprintId);
 	}, [config]);
 
+	const activeSprint = useMemo(
+		() => (config ? getActiveSprint(config) : null),
+		[config],
+	);
+
+	const MAX_VISIBLE = 3;
 	const columnWidth = Math.floor(width / TASK_STATUS_ORDER.length);
+	const scrollOffset = Math.max(0, selectedRow - (MAX_VISIBLE - 1));
 
 	const currentStatus = getStatusForColumn(selectedColumn);
 	const currentTasks = tasksByStatus.get(currentStatus) ?? [];
@@ -134,9 +144,18 @@ export function BoardView({width}: BoardViewProps) {
 			setMoveMode(true);
 		}
 
-		if (input === 'c' && selectedTask && (selectedTask.checklist ?? []).length > 0) {
+		if (
+			input === 'c' &&
+			selectedTask &&
+			(selectedTask.checklist ?? []).length > 0
+		) {
 			setChecklistIndex(0);
 			setChecklistMode(true);
+		}
+
+		if (input === 'S') {
+			setActiveModal('sprint-switcher');
+			return;
 		}
 
 		if (input === 'd' && selectedTask) {
@@ -155,8 +174,49 @@ export function BoardView({width}: BoardViewProps) {
 		return <Text color="red">No config loaded</Text>;
 	}
 
+	const sprintBanner = (() => {
+		if (activeSprint) {
+			const deadlineParts: string[] = [];
+			if (activeSprint.endDate) {
+				const days = daysUntilDeadline(activeSprint.endDate);
+				const formatted = formatDeadlineShort(activeSprint.endDate);
+				if (days < 0) {
+					deadlineParts.push(`${formatted} (overdue)`);
+				} else if (days === 0) {
+					deadlineParts.push(`${formatted} (today)`);
+				} else {
+					deadlineParts.push(`${formatted} (${days}d left)`);
+				}
+			}
+			return (
+				<Box marginBottom={1}>
+					<Text color="cyan">Sprint: </Text>
+					<Text bold>{activeSprint.name}</Text>
+					{deadlineParts.length > 0 && (
+						<Text dimColor> · {deadlineParts.join(' · ')}</Text>
+					)}
+					<Text dimColor> · press </Text>
+					<Text color="yellow">S</Text>
+					<Text dimColor> to switch</Text>
+				</Box>
+			);
+		}
+		return (
+			<Box marginBottom={1}>
+				<Text color="yellow">No active sprint. </Text>
+				<Text dimColor>Press </Text>
+				<Text color="yellow">S</Text>
+				<Text dimColor>
+					{' '}
+					to pick one (or create one with `kanboard sprint add`).
+				</Text>
+			</Box>
+		);
+	})();
+
 	return (
 		<Box flexDirection="column">
+			{sprintBanner}
 			{moveMode && (
 				<Box marginBottom={1}>
 					<Text color="yellow">
@@ -175,6 +235,7 @@ export function BoardView({width}: BoardViewProps) {
 						width={columnWidth}
 						checklistMode={index === selectedColumn && checklistMode}
 						checklistIndex={checklistIndex}
+						scrollOffset={index === selectedColumn ? scrollOffset : 0}
 					/>
 				))}
 			</Box>

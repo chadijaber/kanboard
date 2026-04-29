@@ -11,6 +11,7 @@ interface TaskAddOptions {
 	status?: string;
 	requirements?: string[];
 	deadline?: string;
+	sprint?: string;
 }
 
 function parseStatus(status?: string): TaskStatus | undefined {
@@ -48,6 +49,7 @@ export function taskAddCommand(options: TaskAddOptions): React.ReactNode {
 			status,
 			requirements: options.requirements,
 			deadline: options.deadline ?? null,
+			sprintId: options.sprint ?? null,
 		});
 
 		return React.createElement(

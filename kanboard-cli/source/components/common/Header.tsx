@@ -9,7 +9,14 @@ export function Header() {
 		return null;
 	}
 
-	const viewLabel = currentView === 'board' ? 'Board' : 'Docs';
+	const viewLabel =
+		currentView === 'board'
+			? 'Board'
+			: currentView === 'docs'
+			? 'Docs'
+			: currentView === 'sprints'
+			? 'Sprints'
+			: 'Sprint';
 
 	return (
 		<Box borderStyle="single" borderColor="cyan" paddingX={1} marginBottom={1}>
