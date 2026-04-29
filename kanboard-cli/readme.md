@@ -14,47 +14,30 @@ A terminal-native project management tool with an interactive Kanban board TUI a
 
 ## Installation
 
-Download the prebuilt binary for your platform from the [Releases](../../releases) page.
+kanboard-cli is distributed as a private npm package via GitHub Releases. Node.js 16 or later is required.
 
-### Linux (x64)
-
-```bash
-curl -L https://github.com/chadijaber/kanboard/releases/latest/download/kanboard-linux-x64 -o kanboard
-chmod +x kanboard
-sudo mv kanboard /usr/local/bin/kanboard
-```
-
-### macOS (Apple Silicon)
+1. Go to the [Releases](../../releases) page and download the latest `kanboard-cli-x.x.x.tgz` asset.
+2. Install it globally with npm:
 
 ```bash
-curl -L https://github.com/chadijaber/kanboard/releases/latest/download/kanboard-macos-arm64 -o kanboard
-chmod +x kanboard
-sudo mv kanboard /usr/local/bin/kanboard
+npm install -g kanboard-cli-x.x.x.tgz
 ```
 
-### macOS (Intel)
-
-```bash
-curl -L https://github.com/chadijaber/kanboard/releases/latest/download/kanboard-macos-x64 -o kanboard
-chmod +x kanboard
-sudo mv kanboard /usr/local/bin/kanboard
-```
-
-> **macOS note:** If macOS blocks the binary, run `xattr -d com.apple.quarantine /usr/local/bin/kanboard` once to clear the quarantine flag.
+After installation the `kanboard-cli` command will be available in your terminal.
 
 ## Quick Start
 
 ```bash
 # 1. Initialize a project in your repo root
-kanboard init --name "My Project"
+kanboard-cli init --name "My Project"
 
 # 2. Open the interactive TUI
-kanboard
+kanboard-cli
 
 # 3. Or use CLI commands directly
-kanboard task add --name "Fix login bug" --status todo
-kanboard task list
-kanboard status
+kanboard-cli task add --name "Fix login bug" --status todo
+kanboard-cli task list
+kanboard-cli status
 ```
 
 In the TUI, press `?` at any time to see all keyboard shortcuts.
@@ -65,57 +48,57 @@ In the TUI, press `?` at any time to see all keyboard shortcuts.
 
 | Command           | Description                                                |
 | ----------------- | ---------------------------------------------------------- |
-| `kanboard init`   | Initialize a new `.kanboard.json` in the current directory |
-| `kanboard status` | Show task counts per board column                          |
-| `kanboard config` | View or update project settings                            |
+| `kanboard-cli init`   | Initialize a new `.kanboard.json` in the current directory |
+| `kanboard-cli status` | Show task counts per board column                          |
+| `kanboard-cli config` | View or update project settings                            |
 
 ### Task
 
 | Command                            | Description                                            |
 | ---------------------------------- | ------------------------------------------------------ |
-| `kanboard task add`                | Create a new task (`-n`, `-d`, `-o`, `-s`, `-D`, `-S`) |
-| `kanboard task list`               | List tasks (filter with `--status`, `--owner`)         |
-| `kanboard task show <id>`          | Show full task details                                 |
-| `kanboard task update <id>`        | Update task fields                                     |
-| `kanboard task move <id> <status>` | Move a task to a different column                      |
-| `kanboard task delete <id>`        | Delete a task (`--force` to skip confirmation)         |
+| `kanboard-cli task add`                | Create a new task (`-n`, `-d`, `-o`, `-s`, `-D`, `-S`) |
+| `kanboard-cli task list`               | List tasks (filter with `--status`, `--owner`)         |
+| `kanboard-cli task show <id>`          | Show full task details                                 |
+| `kanboard-cli task update <id>`        | Update task fields                                     |
+| `kanboard-cli task move <id> <status>` | Move a task to a different column                      |
+| `kanboard-cli task delete <id>`        | Delete a task (`--force` to skip confirmation)         |
 
 ### Checklist
 
 | Command                               | Description                |
 | ------------------------------------- | -------------------------- |
-| `kanboard task checklist <id> add`    | Add an item (`--text`)     |
-| `kanboard task checklist <id> toggle` | Toggle an item (`--index`) |
-| `kanboard task checklist <id> remove` | Remove an item (`--index`) |
+| `kanboard-cli task checklist <id> add`    | Add an item (`--text`)     |
+| `kanboard-cli task checklist <id> toggle` | Toggle an item (`--index`) |
+| `kanboard-cli task checklist <id> remove` | Remove an item (`--index`) |
 
 ### Sprint
 
 | Command                         | Description                                |
 | ------------------------------- | ------------------------------------------ |
-| `kanboard sprint add`           | Create a sprint (`-n`, `--start`, `--end`) |
-| `kanboard sprint list`          | List all sprints                           |
-| `kanboard sprint show <id>`     | Show sprint details and progress           |
-| `kanboard sprint update <id>`   | Update sprint fields                       |
-| `kanboard sprint activate <id>` | Set the active sprint                      |
-| `kanboard sprint delete <id>`   | Delete a sprint (tasks move to backlog)    |
+| `kanboard-cli sprint add`           | Create a sprint (`-n`, `--start`, `--end`) |
+| `kanboard-cli sprint list`          | List all sprints                           |
+| `kanboard-cli sprint show <id>`     | Show sprint details and progress           |
+| `kanboard-cli sprint update <id>`   | Update sprint fields                       |
+| `kanboard-cli sprint activate <id>` | Set the active sprint                      |
+| `kanboard-cli sprint delete <id>`   | Delete a sprint (tasks move to backlog)    |
 
 ### Sprint Milestones
 
 | Command                                 | Description                    |
 | --------------------------------------- | ------------------------------ |
-| `kanboard sprint milestone add <id>`    | Add a milestone (`--text`)     |
-| `kanboard sprint milestone toggle <id>` | Toggle a milestone (`--index`) |
-| `kanboard sprint milestone remove <id>` | Remove a milestone (`--index`) |
+| `kanboard-cli sprint milestone add <id>`    | Add a milestone (`--text`)     |
+| `kanboard-cli sprint milestone toggle <id>` | Toggle a milestone (`--index`) |
+| `kanboard-cli sprint milestone remove <id>` | Remove a milestone (`--index`) |
 
 ### Docs
 
 | Command                      | Description                                     |
 | ---------------------------- | ----------------------------------------------- |
-| `kanboard doc add`           | Create a doc (`--path`, `--title`, `--content`) |
-| `kanboard doc list`          | List docs as a tree (`--flat` for a flat list)  |
-| `kanboard doc read <path>`   | Render a doc in the terminal                    |
-| `kanboard doc update <path>` | Update a doc's title or content                 |
-| `kanboard doc delete <path>` | Delete a doc                                    |
+| `kanboard-cli doc add`           | Create a doc (`--path`, `--title`, `--content`) |
+| `kanboard-cli doc list`          | List docs as a tree (`--flat` for a flat list)  |
+| `kanboard-cli doc read <path>`   | Render a doc in the terminal                    |
+| `kanboard-cli doc update <path>` | Update a doc's title or content                 |
+| `kanboard-cli doc delete <path>` | Delete a doc                                    |
 
 ### Common Flags
 
