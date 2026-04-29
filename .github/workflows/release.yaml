@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. v0.1.0)'
+        description: "Release version (e.g. v0.1.0)"
         required: true
         type: string
 
@@ -18,18 +18,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: "20"
           cache: npm
           cache-dependency-path: kanboard-cli/package-lock.json
 
       - name: Install dependencies
         working-directory: kanboard-cli
-        run: npm ci
+        run: npm install
 
       - name: Build TypeScript
         working-directory: kanboard-cli
