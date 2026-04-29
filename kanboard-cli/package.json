@@ -30,6 +30,7 @@
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^3.0.1",
+		"esbuild": "^0.24.0",
 		"@types/fs-extra": "^11.0.4",
 		"@types/react": "^18.0.32",
 		"@types/uuid": "^11.0.0",

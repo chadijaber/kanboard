@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. v0.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: kanboard-cli/package-lock.json
+
+      - name: Install dependencies
+        working-directory: kanboard-cli
+        run: npm ci
+
+      - name: Build TypeScript
+        working-directory: kanboard-cli
+        run: npm run build
+
+      - name: Bundle to CJS
+        working-directory: kanboard-cli
+        run: |
+          mkdir -p bundle
+          npx esbuild source/cli.tsx \
+            --bundle \
+            --platform=node \
+            --format=cjs \
+            --outfile=bundle/cli.cjs
+
+      - name: Package binaries
+        working-directory: kanboard-cli
+        run: |
+          mkdir -p releases
+          npx @yao-pkg/pkg bundle/cli.cjs \
+            --targets node20-linux-x64,node20-macos-x64,node20-macos-arm64 \
+            --output releases/kanboard \
+            --no-bytecode \
+            --public-packages "*" \
+            --public
+          # Rename to explicit arch suffixes for clarity
+          mv releases/kanboard-linux    releases/kanboard-linux-x64    || true
+          mv releases/kanboard-macos    releases/kanboard-macos-x64    || true
+          mv releases/kanboard-macos-arm64 releases/kanboard-macos-arm64 || true
+          ls -lh releases/
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ inputs.version }}
+          git push origin ${{ inputs.version }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: kanboard-cli ${{ inputs.version }}
+          generate_release_notes: true
+          files: kanboard-cli/releases/*
