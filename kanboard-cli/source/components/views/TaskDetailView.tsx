@@ -2,7 +2,7 @@ import React from 'react';
 import {Box, Text, useInput} from 'ink';
 import {useKanboard} from '../../context/KanboardContext.js';
 import {useNavigation} from '../../context/NavigationContext.js';
-import {TASK_STATUS_LABELS} from '../../types/index.js';
+import {TASK_STATUS_LABELS, type Tag} from '../../types/index.js';
 import {daysUntilDeadline, formatDeadlineShort} from '../../utils/date.js';
 
 export function TaskDetailView() {
@@ -11,6 +11,9 @@ export function TaskDetailView() {
 
 	const task = config?.tasks.find(t => t.id === selectedTaskId);
 	const checklist = task?.checklist ?? [];
+	const taskTags: Tag[] = (config?.tags ?? []).filter(t =>
+		(task?.tagIds ?? []).includes(t.id),
+	);
 
 	useInput((input, key) => {
 		if (key.escape) {
@@ -81,6 +84,22 @@ export function TaskDetailView() {
 					<Text dimColor>Owner:</Text>
 				</Box>
 				<Text>{task.owner ?? '(unassigned)'}</Text>
+			</Box>
+			<Box>
+				<Box width={12}>
+					<Text dimColor>Tags:</Text>
+				</Box>
+				{taskTags.length === 0 ? (
+					<Text dimColor>(none)</Text>
+				) : (
+					<Box>
+						{taskTags.map((tag, i) => (
+							<Text key={tag.id} color={tag.color}>
+								{i > 0 ? ' ' : ''}[{tag.name}]
+							</Text>
+						))}
+					</Box>
+				)}
 			</Box>
 			<Box>
 				<Box width={12}>

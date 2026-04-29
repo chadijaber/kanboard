@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Text} from 'ink';
-import type {Task, TaskStatus} from '../../types/index.js';
+import type {Task, TaskStatus, Tag} from '../../types/index.js';
 import {TASK_STATUS_LABELS} from '../../types/index.js';
 import {TaskCard} from './TaskCard.js';
 
@@ -15,6 +15,7 @@ interface ColumnProps {
 	checklistMode?: boolean;
 	checklistIndex?: number;
 	scrollOffset?: number;
+	allTags?: Tag[];
 }
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
@@ -34,6 +35,7 @@ export function Column({
 	checklistMode = false,
 	checklistIndex = 0,
 	scrollOffset = 0,
+	allTags = [],
 }: ColumnProps) {
 	const color = STATUS_COLORS[status];
 	const cardWidth = width - 4;
@@ -79,6 +81,7 @@ export function Column({
 								isSelected && index === visibleSelectedIndex && checklistMode
 							}
 							checklistIndex={checklistIndex}
+							allTags={allTags}
 						/>
 					))
 				)}

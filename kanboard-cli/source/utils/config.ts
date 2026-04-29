@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import type {KanboardConfig, Project} from '../types/index.js';
+import type {KanboardConfig, Project, Tag} from '../types/index.js';
 
 export const CONFIG_FILENAME = '.kanboard.json';
 
@@ -39,6 +39,10 @@ export function readConfig(configPath?: string): KanboardConfig | null {
 		if (!Array.isArray(config.members)) {
 			config.members = [];
 		}
+		// Migration: add tags array if missing
+		if (!Array.isArray((config as any).tags)) {
+			(config as any).tags = [] as Tag[];
+		}
 		// Migration: add checklist and deadline fields to existing tasks
 		for (const task of config.tasks) {
 			if (!Array.isArray(task.checklist)) {
@@ -49,6 +53,9 @@ export function readConfig(configPath?: string): KanboardConfig | null {
 			}
 			if (!('sprintId' in task)) {
 				(task as any).sprintId = null;
+			}
+			if (!Array.isArray((task as any).tagIds)) {
+				(task as any).tagIds = [];
 			}
 			// Repair invariant: backlog tasks must have null sprintId,
 			// non-backlog tasks must have a sprintId — fall back to backlog if not.
@@ -103,6 +110,7 @@ export function createDefaultConfig(project: Partial<Project>): KanboardConfig {
 			updatedAt: now,
 		},
 		members: [],
+		tags: [],
 		tasks: [],
 		docs: [],
 		sprints: [],

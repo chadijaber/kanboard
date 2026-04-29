@@ -9,6 +9,7 @@ import React, {
 import type {
 	KanboardConfig,
 	Task,
+	Tag,
 	Doc,
 	TaskStatus,
 	ViewType,
@@ -16,6 +17,7 @@ import type {
 	Sprint,
 	SprintStatus,
 } from '../types/index.js';
+import {TAG_COLOR_PALETTE} from '../types/index.js';
 import {readConfig, writeConfig} from '../utils/config.js';
 import {generateId} from '../utils/id.js';
 
@@ -27,6 +29,9 @@ interface KanboardContextValue {
 	// Members
 	addMember: (name: string) => void;
 
+	// Tags
+	addTag: (name: string) => Tag;
+
 	// Tasks
 	addTask: (
 		name: string,
@@ -37,6 +42,7 @@ interface KanboardContextValue {
 		checklist?: ChecklistItem[],
 		requirements?: string[],
 		sprintId?: string | null,
+		tagIds?: string[],
 	) => Task;
 	updateTask: (
 		id: string,
@@ -46,6 +52,7 @@ interface KanboardContextValue {
 				| 'name'
 				| 'description'
 				| 'owner'
+				| 'tagIds'
 				| 'requirements'
 				| 'checklist'
 				| 'deadline'
@@ -148,6 +155,29 @@ export function KanboardProvider({
 		});
 	}, []);
 
+	const addTag = useCallback((name: string): Tag => {
+		const trimmed = name.trim();
+		if (!trimmed) throw new Error('Tag name cannot be empty');
+		let result: Tag;
+
+		setConfig(prev => {
+			if (!prev) throw new Error('No config loaded');
+			const existing = prev.tags.find(t => t.name === trimmed);
+			if (existing) {
+				result = existing;
+				return prev;
+			}
+			const color =
+				TAG_COLOR_PALETTE[prev.tags.length % TAG_COLOR_PALETTE.length]!;
+			result = {id: generateId(), name: trimmed, color};
+			const next = {...prev, tags: [...prev.tags, result]};
+			writeConfig(next);
+			return next;
+		});
+
+		return result!;
+	}, []);
+
 	const addTask = useCallback(
 		(
 			name: string,
@@ -158,6 +188,7 @@ export function KanboardProvider({
 			checklist: ChecklistItem[] = [],
 			requirements: string[] = [],
 			sprintId: string | null = null,
+			tagIds: string[] = [],
 		): Task => {
 			const id = generateId();
 			const now = new Date().toISOString();
@@ -189,6 +220,7 @@ export function KanboardProvider({
 					name,
 					description,
 					owner,
+					tagIds,
 					requirements,
 					checklist,
 					deadline,
@@ -221,6 +253,7 @@ export function KanboardProvider({
 					| 'name'
 					| 'description'
 					| 'owner'
+					| 'tagIds'
 					| 'requirements'
 					| 'checklist'
 					| 'deadline'
@@ -554,6 +587,7 @@ export function KanboardProvider({
 		error,
 		reload,
 		addMember,
+		addTag,
 		addTask,
 		updateTask,
 		deleteTask,

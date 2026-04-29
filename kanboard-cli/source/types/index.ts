@@ -28,11 +28,28 @@ export interface ChecklistItem {
 	completed: boolean;
 }
 
+export type TagColor = 'red' | 'green' | 'yellow' | 'blue' | 'magenta' | 'cyan';
+export const TAG_COLOR_PALETTE: TagColor[] = [
+	'cyan',
+	'green',
+	'yellow',
+	'magenta',
+	'red',
+	'blue',
+];
+
+export interface Tag {
+	id: string;
+	name: string;
+	color: TagColor;
+}
+
 export interface Task {
 	id: string;
 	name: string;
 	description: string;
 	owner: string | null;
+	tagIds: string[];
 	requirements: string[];
 	checklist: ChecklistItem[];
 	deadline: string | null;
@@ -84,6 +101,7 @@ export interface KanboardConfig {
 	version: '1.0';
 	project: Project;
 	members: string[];
+	tags: Tag[];
 	tasks: Task[];
 	docs: Doc[];
 	sprints: Sprint[];

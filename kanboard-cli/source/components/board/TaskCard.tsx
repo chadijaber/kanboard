@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Text} from 'ink';
-import type {Task} from '../../types/index.js';
+import type {Task, Tag} from '../../types/index.js';
 import {
 	formatCreatedDate,
 	relativeTime,
@@ -14,6 +14,7 @@ interface TaskCardProps {
 	width: number;
 	checklistMode?: boolean;
 	checklistIndex?: number;
+	allTags?: Tag[];
 }
 
 export function TaskCard({
@@ -22,6 +23,7 @@ export function TaskCard({
 	width,
 	checklistMode = false,
 	checklistIndex = 0,
+	allTags = [],
 }: TaskCardProps) {
 	const checklist = task.checklist ?? [];
 
@@ -61,6 +63,18 @@ export function TaskCard({
 			<Text bold wrap="wrap">
 				{task.name}
 			</Text>
+			{(task.tagIds ?? []).length > 0 && (
+				<Box>
+					{(task.tagIds ?? [])
+						.map(id => allTags.find(t => t.id === id))
+						.filter((t): t is Tag => t !== undefined)
+						.map((tag, i) => (
+							<Text key={tag.id} color={tag.color}>
+								{i > 0 ? ' ' : ''}[{tag.name}]
+							</Text>
+						))}
+				</Box>
+			)}
 			{task.owner ? <Text color="blue">@{task.owner}</Text> : null}
 			{task.deadline ? (
 				<Text color={deadlineColor}>{deadlineLabel}</Text>

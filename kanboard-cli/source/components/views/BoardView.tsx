@@ -35,6 +35,10 @@ export function BoardView({width}: BoardViewProps) {
 	} = useNavigation();
 
 	const [moveMode, setMoveMode] = useState(false);
+	const [moveOriginStatus, setMoveOriginStatus] = useState<ReturnType<
+		typeof getStatusForColumn
+	> | null>(null);
+	const [movingTaskId, setMovingTaskId] = useState<string | null>(null);
 	const [checklistMode, setChecklistMode] = useState(false);
 	const [checklistIndex, setChecklistIndex] = useState(0);
 
@@ -55,6 +59,9 @@ export function BoardView({width}: BoardViewProps) {
 	const currentStatus = getStatusForColumn(selectedColumn);
 	const currentTasks = tasksByStatus.get(currentStatus) ?? [];
 	const selectedTask = currentTasks[selectedRow];
+	const movingTask = movingTaskId
+		? config?.tasks.find(t => t.id === movingTaskId) ?? null
+		: null;
 
 	useInput((input, key) => {
 		if (!config) return;
@@ -87,27 +94,34 @@ export function BoardView({width}: BoardViewProps) {
 		// Handle move mode
 		if (moveMode) {
 			if (input === 'h' || key.leftArrow) {
-				if (selectedTask && selectedColumn > 0) {
+				if (movingTask && selectedColumn > 0) {
 					const newStatus = getStatusForColumn(selectedColumn - 1);
-					moveTask(selectedTask.id, newStatus);
+					moveTask(movingTask.id, newStatus);
 					moveColumnLeft();
-					setSelectedRow(0);
 				}
-				setMoveMode(false);
 				return;
 			}
 			if (input === 'l' || key.rightArrow) {
-				if (selectedTask && selectedColumn < TASK_STATUS_ORDER.length - 1) {
+				if (movingTask && selectedColumn < TASK_STATUS_ORDER.length - 1) {
 					const newStatus = getStatusForColumn(selectedColumn + 1);
-					moveTask(selectedTask.id, newStatus);
+					moveTask(movingTask.id, newStatus);
 					moveColumnRight();
-					setSelectedRow(0);
 				}
+				return;
+			}
+			if (key.return) {
 				setMoveMode(false);
+				setMoveOriginStatus(null);
+				setMovingTaskId(null);
 				return;
 			}
 			if (key.escape) {
+				if (movingTask && moveOriginStatus) {
+					moveTask(movingTask.id, moveOriginStatus);
+				}
 				setMoveMode(false);
+				setMoveOriginStatus(null);
+				setMovingTaskId(null);
 				return;
 			}
 			return;
@@ -141,6 +155,8 @@ export function BoardView({width}: BoardViewProps) {
 		}
 
 		if (input === 'm' && selectedTask) {
+			setMoveOriginStatus(selectedTask.status);
+			setMovingTaskId(selectedTask.id);
 			setMoveMode(true);
 		}
 
@@ -220,7 +236,7 @@ export function BoardView({width}: BoardViewProps) {
 			{moveMode && (
 				<Box marginBottom={1}>
 					<Text color="yellow">
-						Move mode: Press h/l to move task, Esc to cancel
+						Move mode: h/l to move · Enter to confirm · Esc to cancel
 					</Text>
 				</Box>
 			)}
@@ -236,6 +252,7 @@ export function BoardView({width}: BoardViewProps) {
 						checklistMode={index === selectedColumn && checklistMode}
 						checklistIndex={checklistIndex}
 						scrollOffset={index === selectedColumn ? scrollOffset : 0}
+						allTags={config.tags ?? []}
 					/>
 				))}
 			</Box>

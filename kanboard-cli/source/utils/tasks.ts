@@ -57,6 +57,7 @@ export function createTask(input: CreateTaskInput): Task {
 		name: input.name,
 		description: input.description ?? '',
 		owner: input.owner ?? null,
+		tagIds: [],
 		requirements: input.requirements ?? [],
 		checklist: input.checklist ?? [],
 		deadline: input.deadline ?? null,

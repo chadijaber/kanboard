@@ -8,6 +8,7 @@ import {
 	TASK_STATUS_LABELS,
 	type ChecklistItem,
 	type Sprint,
+	type Tag,
 } from '../../types/index.js';
 import {generateId} from '../../utils/id.js';
 
@@ -15,6 +16,7 @@ type FormField =
 	| 'name'
 	| 'description'
 	| 'owner'
+	| 'tags'
 	| 'deadline'
 	| 'checklist'
 	| 'sprint'
@@ -24,6 +26,7 @@ const FIELDS: FormField[] = [
 	'name',
 	'description',
 	'owner',
+	'tags',
 	'deadline',
 	'checklist',
 	'sprint',
@@ -31,7 +34,7 @@ const FIELDS: FormField[] = [
 ];
 
 export function TaskFormView() {
-	const {config, addTask, updateTask, addMember} = useKanboard();
+	const {config, addTask, updateTask, addMember, addTag} = useKanboard();
 	const {setActiveModal, editingTaskId, getStatusForColumn, selectedColumn} =
 		useNavigation();
 
@@ -65,6 +68,15 @@ export function TaskFormView() {
 	const [checklistItemIndex, setChecklistItemIndex] = useState(0);
 	const [addingChecklistItem, setAddingChecklistItem] = useState(false);
 	const newChecklistItemRef = useRef('');
+
+	// Tags selector state
+	const allTags: Tag[] = config?.tags ?? [];
+	const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(
+		new Set(existingTask?.tagIds ?? []),
+	);
+	const [tagListIndex, setTagListIndex] = useState(0);
+	const [addingNewTag, setAddingNewTag] = useState(false);
+	const newTagRef = useRef('');
 
 	// Sprint selector state
 	const sprints: Sprint[] = config?.sprints ?? [];
@@ -119,6 +131,7 @@ export function TaskFormView() {
 					name: nameRef.current.trim(),
 					description: descriptionRef.current.trim(),
 					owner: ownerRef.current.trim() || null,
+					tagIds: Array.from(selectedTagIds),
 					deadline: deadlineValue,
 					checklist,
 					status,
@@ -134,6 +147,7 @@ export function TaskFormView() {
 					checklist,
 					[],
 					selectedSprintId,
+					Array.from(selectedTagIds),
 				);
 			}
 			setActiveModal('none');
@@ -147,6 +161,11 @@ export function TaskFormView() {
 			if (addingNewMember) {
 				setAddingNewMember(false);
 				newMemberRef.current = '';
+				return;
+			}
+			if (addingNewTag) {
+				setAddingNewTag(false);
+				newTagRef.current = '';
 				return;
 			}
 			if (addingChecklistItem) {
@@ -212,6 +231,62 @@ export function TaskFormView() {
 			// Allow clearing owner with delete/backspace
 			if (key.backspace || key.delete) {
 				ownerRef.current = '';
+				return;
+			}
+		}
+
+		if (activeField === 'tags') {
+			if (addingNewTag) {
+				if (key.return) {
+					const name = newTagRef.current.trim();
+					if (name) {
+						const tag = addTag(name);
+						setSelectedTagIds(prev => new Set([...prev, tag.id]));
+					}
+					setAddingNewTag(false);
+					newTagRef.current = '';
+					return;
+				}
+				if (key.escape) {
+					setAddingNewTag(false);
+					newTagRef.current = '';
+					return;
+				}
+				if (key.backspace || key.delete) {
+					newTagRef.current = newTagRef.current.slice(0, -1);
+					return;
+				}
+				if (input && !key.ctrl && !key.meta && !key.tab) {
+					newTagRef.current = newTagRef.current + input;
+					return;
+				}
+				return;
+			}
+
+			const tagListCount = allTags.length + 1;
+			if (input === 'j' || key.downArrow) {
+				setTagListIndex(i => Math.min(i + 1, tagListCount - 1));
+				return;
+			}
+			if (input === 'k' || key.upArrow) {
+				setTagListIndex(i => Math.max(i - 1, 0));
+				return;
+			}
+			if (input === ' ' || key.return) {
+				if (tagListIndex === allTags.length) {
+					setAddingNewTag(true);
+					newTagRef.current = '';
+				} else {
+					const tag = allTags[tagListIndex];
+					if (tag) {
+						setSelectedTagIds(prev => {
+							const next = new Set(prev);
+							if (next.has(tag.id)) next.delete(tag.id);
+							else next.add(tag.id);
+							return next;
+						});
+					}
+				}
 				return;
 			}
 		}
@@ -425,6 +500,120 @@ export function TaskFormView() {
 		);
 	};
 
+	const renderTagsField = () => {
+		const isActive = activeField === 'tags';
+		const selectedTags = allTags.filter(t => selectedTagIds.has(t.id));
+		const inactiveDisplay =
+			selectedTags.length === 0
+				? '(none)'
+				: selectedTags.map(t => `[${t.name}]`).join(' ');
+
+		if (!isActive) {
+			return (
+				<Box key="tags">
+					<Box width={13}>
+						<Text>Tags:</Text>
+					</Box>
+					{selectedTags.length === 0 ? (
+						<Text dimColor>{inactiveDisplay}</Text>
+					) : (
+						<Box>
+							{selectedTags.map((tag, i) => (
+								<Text key={tag.id} color={tag.color}>
+									{i > 0 ? ' ' : ''}[{tag.name}]
+								</Text>
+							))}
+						</Box>
+					)}
+				</Box>
+			);
+		}
+
+		if (addingNewTag) {
+			return (
+				<Box key="tags" flexDirection="column">
+					<Box>
+						<Box width={13}>
+							<Text color="cyan">Tags:</Text>
+						</Box>
+						<Text color="cyan">{'> '}</Text>
+						<TextInputSimple
+							defaultValue={newTagRef.current}
+							onChange={v => {
+								newTagRef.current = v;
+							}}
+							onSubmit={() => {
+								const name = newTagRef.current.trim();
+								if (name) {
+									const tag = addTag(name);
+									setSelectedTagIds(prev => new Set([...prev, tag.id]));
+								}
+								setAddingNewTag(false);
+								newTagRef.current = '';
+							}}
+						/>
+					</Box>
+					<Box marginLeft={13}>
+						<Text dimColor>Type name + Enter to create tag</Text>
+					</Box>
+				</Box>
+			);
+		}
+
+		const listItems: Array<{
+			id: string;
+			name: string;
+			color?: string;
+			isNew: boolean;
+		}> = [
+			...allTags.map(t => ({
+				id: t.id,
+				name: t.name,
+				color: t.color,
+				isNew: false,
+			})),
+			{id: '__new__', name: '+ Add new tag', isNew: true},
+		];
+
+		return (
+			<Box key="tags" flexDirection="column">
+				<Box>
+					<Box width={13}>
+						<Text color="cyan">Tags:</Text>
+					</Box>
+					{selectedTags.length === 0 ? (
+						<Text dimColor>{inactiveDisplay}</Text>
+					) : (
+						<Box>
+							{selectedTags.map((tag, i) => (
+								<Text key={tag.id} color={tag.color}>
+									{i > 0 ? ' ' : ''}[{tag.name}]
+								</Text>
+							))}
+						</Box>
+					)}
+				</Box>
+				<Box flexDirection="column" marginLeft={13}>
+					{listItems.map((item, i) => {
+						const isCursor = i === tagListIndex;
+						const isSelected = !item.isNew && selectedTagIds.has(item.id);
+						return (
+							<Box key={item.id}>
+								<Text color={isCursor ? 'cyan' : (item.color as any)}>
+									{isCursor ? '> ' : '  '}
+									{item.isNew
+										? item.name
+										: `${isSelected ? '[x]' : '[ ]'} ${item.name}`}
+								</Text>
+							</Box>
+						);
+					})}
+					<Text dimColor>j/k: navigate | Space: toggle | Tab: next field</Text>
+				</Box>
+			</Box>
+		);
+	};
+
 	const renderChecklistField = () => {
 		const isActive = activeField === 'checklist';
 		if (!isActive) {
@@ -554,6 +743,7 @@ export function TaskFormView() {
 				{renderTextField('name', 'Name', nameRef)}
 				{renderTextField('description', 'Description', descriptionRef)}
 				{renderOwnerField()}
+				{renderTagsField()}
 				{renderTextField('deadline', 'Deadline', deadlineRef)}
 				{renderChecklistField()}
 				{renderSprintField()}
