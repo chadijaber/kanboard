@@ -6,8 +6,8 @@ Data is stored in a single `.kanboard.json` file at your project root, making it
 
 ## What's inside
 
-| Path | Description |
-|------|-------------|
+| Path                              | Description                                                     |
+| --------------------------------- | --------------------------------------------------------------- |
 | [`kanboard-cli/`](./kanboard-cli) | The CLI tool and interactive TUI — source code and build config |
 
 ## Installation
@@ -37,7 +37,3 @@ kanboard-cli status
 ```
 
 See the [full CLI reference and TUI keyboard shortcuts](./kanboard-cli/readme.md) in `kanboard-cli/readme.md`.
-
-## Releasing
-
-New releases are published via a manual GitHub Actions workflow. Go to **Actions → Release → Run workflow**, enter a version (e.g. `v0.1.0`), and the workflow will pack the npm package and create a GitHub release automatically.
